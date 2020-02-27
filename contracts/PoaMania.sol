@@ -11,14 +11,17 @@ contract PoaMania is Initializable, Ownable, Random {
     using SafeMath for uint256;
     using DrawManager for DrawManager.State;
 
-    struct Round {
-        uint256 startedAt;
-        address winner;
-        uint256 reward;
-    }
+    event Rewarded(
+        address indexed winner,
+        uint256 reward,
+        uint256 fee,
+        uint256 nextRoundShare,
+        uint256 executorReward
+    );
 
-    Round[] public rounds;
     DrawManager.State internal drawManager;
+
+    uint256 public startedAt;
 
     uint256 public roundDuration;
     uint256 public fee;
@@ -55,6 +58,37 @@ contract PoaMania is Initializable, Ownable, Random {
         if (!msg.sender.send(value)) {
             (new Sacrifice).value(value)(msg.sender);
         }
+    }
+
+    function nextRound() public {
+        _reward();
+    }
+
+    function _nextRound() internal {
+        startedAt = block.timestamp;
+    }
+
+    function _reward() internal {
+        require(block.timestamp > startedAt.add(roundDuration), "the round is not over yet");
+
+        uint256 seed = _useSeed();
+        address winner = drawManager.draw(seed);
+
+        uint256 totalReward = address(this).balance.sub(drawManager.totalBalance());
+        uint256 feeValue = _calculatePercentage(totalReward, fee);
+        uint256 nextRoundShareValue = _calculatePercentage(totalReward, nextRoundShare);
+        uint256 executorShareValue = _calculatePercentage(totalReward, executorShare);
+        uint256 winnedReward = totalReward.sub(feeValue).sub(nextRoundShareValue).sub(executorShareValue);
+
+        if (winner != address(0)) {
+            drawManager.deposit(winner, winnedReward);
+        }
+        if (feeReceiver != address(0)) {
+            drawManager.deposit(feeReceiver, feeValue);
+        }
+        drawManager.deposit(msg.sender, executorShareValue);
+
+        emit Rewarded(winner, winnedReward, feeValue, nextRoundShareValue, executorShareValue);
     }
 
     function setRoundDuration(uint256 _roundDuration) external onlyOwner {
@@ -105,5 +139,9 @@ contract PoaMania is Initializable, Ownable, Random {
     function _validateSumOfShares() internal view {
         uint256 sum = fee.add(nextRoundShare).add(executorShare);
         require(sum < 1 ether, "should be less than 1 ether");
+    }
+
+    function _calculatePercentage(uint256 _value, uint256 _percentage) internal pure returns (uint256) {
+        return _value.mul(_percentage).div(1 ether);
     }
 }
