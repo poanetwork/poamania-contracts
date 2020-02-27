@@ -52,7 +52,6 @@ contract PoaMania is Initializable, Ownable, Random {
 
     function withdraw() external {
         uint256 value = drawManager.withdraw(msg.sender);
-        msg.sender.transfer();
         if (!msg.sender.send(value)) {
             (new Sacrifice).value(value)(msg.sender);
         }
