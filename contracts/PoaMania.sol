@@ -4,16 +4,21 @@ import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/contracts/ownership/Ownable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "./Random.sol";
+import "./DrawManager.sol";
+import "./Sacrifice.sol";
 
 contract PoaMania is Initializable, Ownable, Random {
     using SafeMath for uint256;
+    using DrawManager for DrawManager.State;
 
     struct Round {
         uint256 startedAt;
         address winner;
         uint256 reward;
     }
+
     Round[] public rounds;
+    DrawManager.State internal drawManager;
 
     uint256 public roundDuration;
     uint256 public fee;
@@ -38,6 +43,19 @@ contract PoaMania is Initializable, Ownable, Random {
         _setExecutorShare(_executorShare);
         _validateSumOfShares();
         Random._init(_randomContract);
+    }
+
+    function deposit() external payable {
+        require(msg.value > 0, "zero value");
+        drawManager.deposit(msg.sender, msg.value);
+    }
+
+    function withdraw() external {
+        uint256 value = drawManager.withdraw(msg.sender);
+        msg.sender.transfer();
+        if (!msg.sender.send(value)) {
+            (new Sacrifice).value(value)(msg.sender);
+        }
     }
 
     function setRoundDuration(uint256 _roundDuration) external onlyOwner {

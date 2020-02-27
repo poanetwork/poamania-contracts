@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/poanetwork/poa-mania#readme",
   "dependencies": {
+    "@kleros/kleros": "DeltaCamp/kleros#ca7fbdcc195cfd1267efb99aae905c3400a5ea5f",
     "@openzeppelin/cli": "^2.7.1",
     "@openzeppelin/contracts": "^2.5.0"
   }
