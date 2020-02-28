@@ -76,7 +76,7 @@ contract PoaMania is Initializable, Ownable, Random {
         uint256 seed = _useSeed();
         address winner = drawManager.draw(seed);
 
-        uint256 totalReward = address(this).balance.sub(drawManager.totalBalance());
+        uint256 totalReward = address(this).balance.sub(totalDepositedBalance());
         uint256 feeValue = _calculatePercentage(totalReward, fee);
         uint256 nextRoundShareValue = _calculatePercentage(totalReward, nextRoundShare);
         uint256 executorShareValue = _calculatePercentage(totalReward, executorShare);
@@ -114,6 +114,14 @@ contract PoaMania is Initializable, Ownable, Random {
     function setExecutorShare(uint256 _executorShare) external onlyOwner {
         _setExecutorShare(_executorShare);
         _validateSumOfShares();
+    }
+
+    function balanceOf(address _user) external view returns (uint256) {
+        return drawManager.balanceOf(_user);
+    }
+
+    function totalDepositedBalance() public view returns (uint256) {
+        return drawManager.totalBalance();
     }
 
     function _setRoundDuration(uint256 _roundDuration) internal {
