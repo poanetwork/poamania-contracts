@@ -1,7 +1,11 @@
 {
   "manifestVersion": "2.2",
-  "contracts": {},
-  "dependencies": {},
+  "contracts": {
+    "PoaMania": "PoaMania"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts-ethereum-package": "^2.4.0"
+  },
   "name": "poa-mania",
   "version": "1.0.0",
   "compiler": {

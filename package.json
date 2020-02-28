@@ -19,6 +19,9 @@
   "dependencies": {
     "@kleros/kleros": "DeltaCamp/kleros#ca7fbdcc195cfd1267efb99aae905c3400a5ea5f",
     "@openzeppelin/cli": "^2.7.1",
-    "@openzeppelin/contracts": "^2.5.0"
+    "@openzeppelin/contracts": "^2.5.0",
+    "@openzeppelin/contracts-ethereum-package": "^2.4.0",
+    "dotenv": "^8.2.0",
+    "truffle-hdwallet-provider": "^1.0.17"
   }
 }

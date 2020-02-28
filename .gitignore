@@ -1,3 +1,6 @@
 .gitkeep
 node_modules
 build
+.env
+.openzeppelin/.session
+.openzeppelin/dev-*.json

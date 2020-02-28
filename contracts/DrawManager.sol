@@ -1,7 +1,7 @@
 pragma solidity ^0.5.16;
 
 import "@kleros/kleros/contracts/data-structures/SortitionSumTreeFactory.sol";
-import "@openzeppelin/contracts/math/SafeMath.sol";
+import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 
 
 library DrawManager {
