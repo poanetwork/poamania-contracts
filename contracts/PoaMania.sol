@@ -46,6 +46,7 @@ contract PoaMania is Initializable, Ownable, Random {
         _setExecutorShare(_executorShare);
         _validateSumOfShares();
         Random._init(_randomContract);
+        _nextRound();
     }
 
     function deposit() external payable {
@@ -62,6 +63,7 @@ contract PoaMania is Initializable, Ownable, Random {
 
     function nextRound() public {
         _reward();
+        _nextRound();
     }
 
     function _nextRound() internal {
