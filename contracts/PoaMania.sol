@@ -29,6 +29,8 @@ contract PoaMania is Initializable, Ownable, Random {
     uint256 public nextRoundShare;
     uint256 public executorShare;
 
+    function () external payable {}
+
     function initialize(
         address _owner,
         address _randomContract,
@@ -46,6 +48,7 @@ contract PoaMania is Initializable, Ownable, Random {
         _setExecutorShare(_executorShare);
         _validateSumOfShares();
         Random._init(_randomContract);
+        drawManager.create();
         _nextRound();
     }
 

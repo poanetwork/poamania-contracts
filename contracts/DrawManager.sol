@@ -15,6 +15,10 @@ library DrawManager {
         SortitionSumTreeFactory.SortitionSumTrees sortitionSumTrees;
     }
 
+    function create(State storage self) public {
+        self.sortitionSumTrees.createTree(TREE_OF_STAKES, MAX_BRANCHES_PER_NODE);
+    }
+
     function deposit(State storage self, address _addr, uint256 _amount) public {
         bytes32 userId = bytes32(uint256(_addr));
         uint256 currentAmount = self.sortitionSumTrees.stakeOf(TREE_OF_STAKES, userId);
