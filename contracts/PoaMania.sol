@@ -12,8 +12,8 @@ contract PoaMania is Initializable, Ownable, Random {
     using DrawManager for DrawManager.State;
 
     event Rewarded(
-        address indexed winner,
-        uint256 reward,
+        address[3] winners,
+        uint256[3] prizes,
         uint256 fee,
         uint256 nextRoundShare,
         uint256 executorReward
@@ -28,6 +28,7 @@ contract PoaMania is Initializable, Ownable, Random {
     address public feeReceiver;
     uint256 public nextRoundShare;
     uint256 public executorShare;
+    uint256[2] public prizeSizes; // 1st and 2nd winners prizes (in percentage. 100% == 1 ether). The 3rd one is calculated
 
     function () external payable {}
 
@@ -38,7 +39,8 @@ contract PoaMania is Initializable, Ownable, Random {
         uint256 _fee,
         address _feeReceiver,
         uint256 _nextRoundShare,
-        uint256 _executorShare
+        uint256 _executorShare,
+        uint256[2] memory _prizeSizes
     ) public initializer {
         _transferOwnership(_owner);
         _setRoundDuration(_roundDuration);
@@ -47,6 +49,7 @@ contract PoaMania is Initializable, Ownable, Random {
         _setNextRoundShare(_nextRoundShare);
         _setExecutorShare(_executorShare);
         _validateSumOfShares();
+        _setPrizeSizes(_prizeSizes);
         Random._init(_randomContract);
         drawManager.create();
         _nextRound();
@@ -79,24 +82,36 @@ contract PoaMania is Initializable, Ownable, Random {
     function _reward() internal {
         require(block.timestamp > startedAt.add(roundDuration), "the round is not over yet");
 
-        uint256 seed = _useSeed();
-        address winner = drawManager.draw(seed);
-
         uint256 totalReward = address(this).balance.sub(totalDepositedBalance());
         uint256 feeValue = _calculatePercentage(totalReward, fee);
         uint256 nextRoundShareValue = _calculatePercentage(totalReward, nextRoundShare);
         uint256 executorShareValue = _calculatePercentage(totalReward, executorShare);
-        uint256 winnedReward = totalReward.sub(feeValue).sub(nextRoundShareValue).sub(executorShareValue);
 
-        if (winner != address(0)) {
-            drawManager.deposit(winner, winnedReward);
+        uint256 winnersTotalPrize = totalReward.sub(feeValue).sub(nextRoundShareValue).sub(executorShareValue);
+        address[3] memory winners;
+        uint256[3] memory winnersCurrentDeposits;
+        uint256[3] memory prizeValues;
+        prizeValues[0] = _calculatePercentage(winnersTotalPrize, prizeSizes[0]);
+        prizeValues[1] = _calculatePercentage(winnersTotalPrize, prizeSizes[1]);
+        prizeValues[2] = winnersTotalPrize.sub(prizeValues[0]).sub(prizeValues[1]);
+
+        uint256 seed = _useSeed();
+        for (uint256 i = 0; i < 3; i++) {
+            winners[i] = drawManager.draw(seed);
+            if (winners[i] == address(0)) break;
+            winnersCurrentDeposits[i] = drawManager.withdraw(winners[i]);
         }
+        for (uint256 i = 0; i < 3; i++) {
+            if (winners[i] == address(0)) break;
+            drawManager.deposit(winners[i], winnersCurrentDeposits[i].add(prizeValues[i]));
+        }
+
         if (feeReceiver != address(0)) {
             drawManager.deposit(feeReceiver, feeValue);
         }
         drawManager.deposit(msg.sender, executorShareValue);
 
-        emit Rewarded(winner, winnedReward, feeValue, nextRoundShareValue, executorShareValue);
+        emit Rewarded(winners, prizeValues, feeValue, nextRoundShareValue, executorShareValue);
     }
 
     function setRoundDuration(uint256 _roundDuration) external onlyOwner {
@@ -120,6 +135,10 @@ contract PoaMania is Initializable, Ownable, Random {
     function setExecutorShare(uint256 _executorShare) external onlyOwner {
         _setExecutorShare(_executorShare);
         _validateSumOfShares();
+    }
+
+    function setPrizeSizes(uint256[2] calldata _prizeSizes) external onlyOwner {
+        _setPrizeSizes(_prizeSizes);
     }
 
     function balanceOf(address _user) public view returns (uint256) {
@@ -150,6 +169,12 @@ contract PoaMania is Initializable, Ownable, Random {
 
     function _setExecutorShare(uint256 _executorShare) internal {
         executorShare = _executorShare;
+    }
+
+    function _setPrizeSizes(uint256[2] memory _prizeSizes) internal {
+        uint256 sum = _prizeSizes[0].add(_prizeSizes[1]);
+        require(sum > 0 && sum <= 1 ether, "should be less than or equal to 1 ether");
+        prizeSizes = _prizeSizes;
     }
 
     function _validateSumOfShares() internal view {
