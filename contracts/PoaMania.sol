@@ -57,10 +57,15 @@ contract PoaMania is Initializable, Ownable, Random {
         drawManager.deposit(msg.sender, msg.value);
     }
 
-    function withdraw() external {
-        uint256 value = drawManager.withdraw(msg.sender);
-        if (!msg.sender.send(value)) {
-            (new Sacrifice).value(value)(msg.sender);
+    function withdraw() public {
+        uint256 amount = balanceOf(msg.sender);
+        withdraw(amount);
+    }
+
+    function withdraw(uint256 _amount) public {
+        drawManager.withdraw(msg.sender, _amount);
+        if (!msg.sender.send(_amount)) {
+            (new Sacrifice).value(_amount)(msg.sender);
         }
     }
 
@@ -119,7 +124,7 @@ contract PoaMania is Initializable, Ownable, Random {
         _validateSumOfShares();
     }
 
-    function balanceOf(address _user) external view returns (uint256) {
+    function balanceOf(address _user) public view returns (uint256) {
         return drawManager.balanceOf(_user);
     }
 
