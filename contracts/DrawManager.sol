@@ -26,11 +26,18 @@ library DrawManager {
         self.sortitionSumTrees.set(TREE_OF_STAKES, currentAmount, userId);
     }
 
-    function withdraw(State storage self, address _addr, uint256 _amount) public {
+    function withdraw(State storage self, address _addr) public returns (uint256) {
+        bytes32 userId = bytes32(uint256(_addr));
+        uint256 currentAmount = self.sortitionSumTrees.stakeOf(TREE_OF_STAKES, userId);
+        return withdraw(self, _addr, currentAmount);
+    }
+
+    function withdraw(State storage self, address _addr, uint256 _amount) public returns (uint256) {
         bytes32 userId = bytes32(uint256(_addr));
         uint256 currentAmount = self.sortitionSumTrees.stakeOf(TREE_OF_STAKES, userId);
         uint256 remainingAmount = currentAmount.sub(_amount);
         self.sortitionSumTrees.set(TREE_OF_STAKES, remainingAmount, userId);
+        return _amount;
     }
 
     function draw(State storage self, uint256 _drawnNumber) public view returns (address) {
