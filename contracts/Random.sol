@@ -7,15 +7,15 @@ contract Random {
 
     uint256 private _seed;
     uint256 private _seedLastBlock;
-    uint256 private _updateInterval;
+    uint256 randomUpdateInterval;
 
     function _init(address _randomContract) internal {
         require(_randomContract != address(0), "Random/contract-zero");
         posdaoRandomContract = IPOSDAORandom(_randomContract);
         _seed = posdaoRandomContract.currentSeed();
         _seedLastBlock = block.number;
-        _updateInterval = posdaoRandomContract.collectRoundLength();
-        require(_updateInterval != 0, "Random/interval-zero");
+        randomUpdateInterval = posdaoRandomContract.collectRoundLength();
+        require(randomUpdateInterval != 0, "Random/interval-zero");
     }
 
     function _useSeed() internal returns (uint256) {
@@ -25,11 +25,11 @@ contract Random {
     }
 
     function _wasSeedUpdated() private returns (bool) {
-        if (block.number - _seedLastBlock <= _updateInterval) {
+        if (block.number - _seedLastBlock <= randomUpdateInterval) {
             return false;
         }
 
-        _updateInterval = posdaoRandomContract.collectRoundLength();
+        randomUpdateInterval = posdaoRandomContract.collectRoundLength();
 
         uint256 remoteSeed = posdaoRandomContract.currentSeed();
         if (remoteSeed != _seed) {

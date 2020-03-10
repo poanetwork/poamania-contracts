@@ -22,6 +22,7 @@ contract PoaMania is Initializable, Ownable, Random {
     DrawManager.State internal drawManager;
 
     uint256 public startedAt;
+    uint256 public blockTime; // avg block time in seconds
 
     uint256 public roundDuration;
     uint256 public fee;
@@ -33,6 +34,12 @@ contract PoaMania is Initializable, Ownable, Random {
     // The 3rd one is calculated using 2 previous
     uint256[2] prizeSizes;
 
+    modifier notLocked() {
+        uint256 lockStart = getLockStart();
+        require(block.timestamp < lockStart, "locked");
+        _;
+    }
+
     function () external payable {}
 
     function initialize(
@@ -43,7 +50,8 @@ contract PoaMania is Initializable, Ownable, Random {
         address _feeReceiver,
         uint256 _nextRoundShare,
         uint256 _executorShare,
-        uint256[2] memory _prizeSizes
+        uint256[2] memory _prizeSizes,
+        uint256 _blockTime
     ) public initializer {
         _transferOwnership(_owner);
         _setRoundDuration(_roundDuration);
@@ -53,22 +61,23 @@ contract PoaMania is Initializable, Ownable, Random {
         _setExecutorShare(_executorShare);
         _validateSumOfShares();
         _setPrizeSizes(_prizeSizes);
+        _setBlockTime(_blockTime);
         Random._init(_randomContract);
         drawManager.create();
         _nextRound();
     }
 
-    function deposit() external payable {
+    function deposit() external payable notLocked {
         require(msg.value > 0, "zero value");
         drawManager.deposit(msg.sender, msg.value);
     }
 
-    function withdraw() external {
+    function withdraw() external notLocked {
         uint256 amount = drawManager.withdraw(msg.sender);
         _send(msg.sender, amount);
     }
 
-    function withdraw(uint256 _amount) external {
+    function withdraw(uint256 _amount) external notLocked {
         drawManager.withdraw(msg.sender, _amount);
         _send(msg.sender, _amount);
     }
@@ -144,6 +153,10 @@ contract PoaMania is Initializable, Ownable, Random {
         _setPrizeSizes(_prizeSizes);
     }
 
+    function setBlockTime(uint256 _blockTime) external onlyOwner {
+        _setBlockTime(_blockTime);
+    }
+
     function balanceOf(address _user) public view returns (uint256) {
         return drawManager.balanceOf(_user);
     }
@@ -154,6 +167,10 @@ contract PoaMania is Initializable, Ownable, Random {
 
     function getPrizeSizes() public view returns (uint256[2] memory) {
         return prizeSizes;
+    }
+
+    function getLockStart() public view returns (uint256) {
+        return startedAt.add(roundDuration).sub(randomUpdateInterval.mul(blockTime));
     }
 
     function _setRoundDuration(uint256 _roundDuration) internal {
@@ -182,6 +199,11 @@ contract PoaMania is Initializable, Ownable, Random {
         uint256 sum = _prizeSizes[0].add(_prizeSizes[1]);
         require(sum > 0 && sum <= 1 ether, "should be less than or equal to 1 ether");
         prizeSizes = _prizeSizes;
+    }
+
+    function _setBlockTime(uint256 _blockTime) internal {
+        require(_blockTime > 0, "should be greater than 0");
+        blockTime = _blockTime;
     }
 
     function _validateSumOfShares() internal view {
