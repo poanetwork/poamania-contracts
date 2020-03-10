@@ -28,7 +28,10 @@ contract PoaMania is Initializable, Ownable, Random {
     address public feeReceiver;
     uint256 public nextRoundShare;
     uint256 public executorShare;
-    uint256[2] public prizeSizes; // 1st and 2nd winners prizes (in percentage. 100% == 1 ether). The 3rd one is calculated
+
+    // 1st and 2nd winners prizes (in percentage. 100% == 1 ether).
+    // The 3rd one is calculated using 2 previous
+    uint256[2] prizeSizes;
 
     function () external payable {}
 
@@ -147,6 +150,10 @@ contract PoaMania is Initializable, Ownable, Random {
 
     function totalDepositedBalance() public view returns (uint256) {
         return drawManager.totalBalance();
+    }
+
+    function getPrizeSizes() public view returns (uint256[2] memory) {
+        return prizeSizes;
     }
 
     function _setRoundDuration(uint256 _roundDuration) internal {
