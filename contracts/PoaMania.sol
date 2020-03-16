@@ -173,6 +173,30 @@ contract PoaMania is Initializable, Ownable, Random {
         return startedAt.add(roundDuration).sub(randomUpdateInterval.mul(blockTime));
     }
 
+    function getRoundInfo() external view returns (
+        uint256 _startedAt,
+        uint256 _roundDuration,
+        uint256 _fee,
+        address _feeReceiver,
+        uint256 _nextRoundShare,
+        uint256 _executorShare,
+        uint256[2] memory _prizeSizes,
+        uint256 _lockStart,
+        uint256 _totalDeposited
+    ) {
+        return (
+            startedAt,
+            roundDuration,
+            fee,
+            feeReceiver,
+            nextRoundShare,
+            executorShare,
+            prizeSizes,
+            getLockStart(),
+            totalDepositedBalance()
+        );
+    }
+
     function _setRoundDuration(uint256 _roundDuration) internal {
         require(_roundDuration > 0, "should be greater than 0");
         roundDuration = _roundDuration;
