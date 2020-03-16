@@ -12,15 +12,19 @@ contract PoaMania is Initializable, Ownable, Random {
     using DrawManager for DrawManager.State;
 
     event Rewarded(
+        uint256 id,
         address[3] winners,
         uint256[3] prizes,
         uint256 fee,
+        address feeReceiver,
         uint256 nextRoundShare,
-        uint256 executorReward
+        uint256 executorReward,
+        address executor
     );
 
     DrawManager.State internal drawManager;
 
+    uint256 public roundId;
     uint256 public startedAt;
     uint256 public blockTime; // avg block time in seconds
 
@@ -89,6 +93,7 @@ contract PoaMania is Initializable, Ownable, Random {
 
     function _nextRound() internal {
         startedAt = block.timestamp;
+        roundId = roundId.add(1);
     }
 
     function _reward() internal {
@@ -123,7 +128,16 @@ contract PoaMania is Initializable, Ownable, Random {
         }
         drawManager.deposit(msg.sender, executorShareValue);
 
-        emit Rewarded(winners, prizeValues, feeValue, nextRoundShareValue, executorShareValue);
+        emit Rewarded(
+            roundId,
+            winners,
+            prizeValues,
+            feeValue,
+            feeReceiver,
+            nextRoundShareValue,
+            executorShareValue,
+            msg.sender
+        );
     }
 
     function setRoundDuration(uint256 _roundDuration) external onlyOwner {
@@ -174,8 +188,10 @@ contract PoaMania is Initializable, Ownable, Random {
     }
 
     function getRoundInfo() external view returns (
+        uint256 _roundId,
         uint256 _startedAt,
         uint256 _roundDuration,
+        uint256 _blockTime,
         uint256 _fee,
         address _feeReceiver,
         uint256 _nextRoundShare,
@@ -185,8 +201,10 @@ contract PoaMania is Initializable, Ownable, Random {
         uint256 _totalDeposited
     ) {
         return (
+            roundId,
             startedAt,
             roundDuration,
+            blockTime,
             fee,
             feeReceiver,
             nextRoundShare,
