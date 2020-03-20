@@ -12,7 +12,7 @@ contract PoaMania is Initializable, Ownable, Random {
     using DrawManager for DrawManager.State;
 
     event Rewarded(
-        uint256 indexed id,
+        uint256 id,
         address[3] winners,
         uint256[3] prizes,
         uint256 fee,
