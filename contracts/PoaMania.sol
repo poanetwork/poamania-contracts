@@ -12,7 +12,7 @@ contract PoaMania is Initializable, Ownable, Random {
     using DrawManager for DrawManager.State;
 
     event Rewarded(
-        uint256 id,
+        uint256 indexed id,
         address[3] winners,
         uint256[3] prizes,
         uint256 fee,
@@ -21,6 +21,8 @@ contract PoaMania is Initializable, Ownable, Random {
         uint256 executorReward,
         address executor
     );
+    event Deposited(address indexed user, uint256 amount);
+    event Withdrawn(address indexed user, uint256 amount);
 
     DrawManager.State internal drawManager;
 
@@ -74,16 +76,19 @@ contract PoaMania is Initializable, Ownable, Random {
     function deposit() external payable notLocked {
         require(msg.value > 0, "zero value");
         drawManager.deposit(msg.sender, msg.value);
+        emit Deposited(msg.sender, msg.value);
     }
 
     function withdraw() external notLocked {
         uint256 amount = drawManager.withdraw(msg.sender);
         _send(msg.sender, amount);
+        emit Withdrawn(msg.sender, amount);
     }
 
     function withdraw(uint256 _amount) external notLocked {
         drawManager.withdraw(msg.sender, _amount);
         _send(msg.sender, _amount);
+        emit Withdrawn(msg.sender, _amount);
     }
 
     function nextRound() public {
