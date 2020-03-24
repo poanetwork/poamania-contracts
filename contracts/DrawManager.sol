@@ -55,4 +55,8 @@ library DrawManager {
     function totalBalance(State storage self) public view returns (uint256) {
         return self.sortitionSumTrees.total(TREE_OF_STAKES);
     }
+
+    function numberOfParticipants(State storage self) public view returns (uint256) {
+        return self.sortitionSumTrees.numberOfNodes(TREE_OF_STAKES);
+    }
 }

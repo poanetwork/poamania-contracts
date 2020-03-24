@@ -184,6 +184,10 @@ contract PoaMania is Initializable, Ownable, Random {
         return drawManager.totalBalance();
     }
 
+    function numberOfParticipants() public view returns (uint256) {
+        return drawManager.numberOfParticipants();
+    }
+
     function getPrizeSizes() public view returns (uint256[2] memory) {
         return prizeSizes;
     }
