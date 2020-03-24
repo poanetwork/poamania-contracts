@@ -12,14 +12,19 @@ contract PoaMania is Initializable, Ownable, Random {
     using DrawManager for DrawManager.State;
 
     event Rewarded(
-        uint256 id,
+        uint256 indexed roundId,
         address[3] winners,
         uint256[3] prizes,
         uint256 fee,
         address feeReceiver,
-        uint256 nextRoundShare,
+        uint256 jackpotShare,
         uint256 executorReward,
         address executor
+    );
+    event Jackpot(
+        uint256 indexed roundId,
+        address winner,
+        uint256 prize
     );
     event Deposited(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
@@ -34,8 +39,11 @@ contract PoaMania is Initializable, Ownable, Random {
 
     uint256 public fee;
     address public feeReceiver;
-    uint256 public nextRoundShare;
     uint256 public executorShare;
+
+    uint256 public jackpotShare;
+    uint256 public jackpotChance;
+    uint256 public jackpot;
 
     // 1st and 2nd winners prizes (in percentage. 100% == 1 ether).
     // The 3rd one is calculated using 2 previous
@@ -53,24 +61,27 @@ contract PoaMania is Initializable, Ownable, Random {
         address _owner,
         address _randomContract,
         uint256 _roundDuration,
+        uint256 _blockTime,
+        uint256 _minDeposit,
+        uint256[2] memory _prizeSizes,
         uint256 _fee,
         address _feeReceiver,
-        uint256 _nextRoundShare,
         uint256 _executorShare,
-        uint256[2] memory _prizeSizes,
-        uint256 _blockTime,
-        uint256 _minDeposit
+        uint256 _jackpotShare,
+        uint256 _jackpotChance
     ) public initializer {
         _transferOwnership(_owner);
         _setRoundDuration(_roundDuration);
         _setFee(_fee);
         _setFeeReceiver(_feeReceiver);
-        _setNextRoundShare(_nextRoundShare);
+        _setJackpotShare(_jackpotShare);
+        _setJackpotChance(_jackpotChance);
         _setExecutorShare(_executorShare);
         _validateSumOfShares();
         _setPrizeSizes(_prizeSizes);
         _setBlockTime(_blockTime);
         _setMinDeposit(_minDeposit);
+        jackpot = 0;
         Random._init(_randomContract);
         drawManager.create();
         _nextRound();
@@ -113,12 +124,12 @@ contract PoaMania is Initializable, Ownable, Random {
     function _reward() internal {
         require(block.timestamp > startedAt.add(roundDuration), "the round is not over yet");
 
-        uint256 totalReward = address(this).balance.sub(totalDepositedBalance());
+        uint256 totalReward = address(this).balance.sub(totalDepositedBalance()).sub(jackpot);
         uint256 feeValue = _calculatePercentage(totalReward, fee);
-        uint256 nextRoundShareValue = _calculatePercentage(totalReward, nextRoundShare);
+        uint256 jackpotShareValue = _calculatePercentage(totalReward, jackpotShare);
         uint256 executorShareValue = _calculatePercentage(totalReward, executorShare);
 
-        uint256 winnersTotalPrize = totalReward.sub(feeValue).sub(nextRoundShareValue).sub(executorShareValue);
+        uint256 winnersTotalPrize = totalReward.sub(feeValue).sub(jackpotShareValue).sub(executorShareValue);
         address[3] memory winners;
         uint256[3] memory winnersCurrentDeposits;
         uint256[3] memory prizeValues;
@@ -127,10 +138,17 @@ contract PoaMania is Initializable, Ownable, Random {
         prizeValues[2] = winnersTotalPrize.sub(prizeValues[0]).sub(prizeValues[1]);
 
         uint256 seed = _useSeed();
+        address jackpotWinner;
+        if (seed % 1 ether < jackpotChance && jackpot > 0) {
+            jackpotWinner = drawManager.draw(seed);
+            seed = getNewRandom(seed);
+        }
+        
         for (uint256 i = 0; i < 3; i++) {
             winners[i] = drawManager.draw(seed);
             if (winners[i] == address(0)) break;
             winnersCurrentDeposits[i] = drawManager.withdraw(winners[i]);
+            seed = getNewRandom(seed);
         }
         for (uint256 i = 0; i < 3; i++) {
             if (winners[i] == address(0)) break;
@@ -148,10 +166,17 @@ contract PoaMania is Initializable, Ownable, Random {
             prizeValues,
             feeValue,
             feeReceiver,
-            nextRoundShareValue,
+            jackpotShareValue,
             executorShareValue,
             msg.sender
         );
+
+        if (jackpotWinner != address(0)) {
+            drawManager.deposit(jackpotWinner, jackpot);   
+            emit Jackpot(roundId, jackpotWinner, jackpot);
+            jackpot = 0;
+        }
+        jackpot = jackpot.add(jackpotShareValue);
     }
 
     function setRoundDuration(uint256 _roundDuration) external onlyOwner {
@@ -167,9 +192,13 @@ contract PoaMania is Initializable, Ownable, Random {
         _setFeeReceiver(_feeReceiver);
     }
 
-    function setNextRoundShare(uint256 _nextRoundShare) external onlyOwner {
-        _setNextRoundShare(_nextRoundShare);
+    function setJackpotShare(uint256 _jackpotShare) external onlyOwner {
+        _setJackpotShare(_jackpotShare);
         _validateSumOfShares();
+    }
+
+    function setJackpotChance(uint256 _jackpotChance) external onlyOwner {
+        _setJackpotChance(_jackpotChance);
     }
 
     function setExecutorShare(uint256 _executorShare) external onlyOwner {
@@ -214,11 +243,14 @@ contract PoaMania is Initializable, Ownable, Random {
         uint256 _startedAt,
         uint256 _roundDuration,
         uint256 _blockTime,
+        uint256 _minDeposit,
+        uint256[2] memory _prizeSizes,
         uint256 _fee,
         address _feeReceiver,
-        uint256 _nextRoundShare,
         uint256 _executorShare,
-        uint256[2] memory _prizeSizes,
+        uint256 _jackpotShare,
+        uint256 _jackpotChance,
+        uint256 _jackpot,
         uint256 _lockStart,
         uint256 _totalDeposited
     ) {
@@ -227,11 +259,14 @@ contract PoaMania is Initializable, Ownable, Random {
             startedAt,
             roundDuration,
             blockTime,
+            minDeposit,
+            prizeSizes,
             fee,
             feeReceiver,
-            nextRoundShare,
             executorShare,
-            prizeSizes,
+            jackpotShare,
+            jackpotChance,
+            jackpot,
             getLockStart(),
             totalDepositedBalance()
         );
@@ -251,8 +286,13 @@ contract PoaMania is Initializable, Ownable, Random {
         feeReceiver = _feeReceiver;
     }
 
-    function _setNextRoundShare(uint256 _nextRoundShare) internal {
-        nextRoundShare = _nextRoundShare;
+    function _setJackpotShare(uint256 _jackpotShare) internal {
+        jackpotShare = _jackpotShare;
+    }
+
+    function _setJackpotChance(uint256 _jackpotChance) internal {
+        require(_jackpotChance <= 1 ether, "should be less than or equal to 1 ether");
+        jackpotChance = _jackpotChance;
     }
 
     function _setExecutorShare(uint256 _executorShare) internal {
@@ -275,7 +315,7 @@ contract PoaMania is Initializable, Ownable, Random {
     }
 
     function _validateSumOfShares() internal view {
-        uint256 sum = fee.add(nextRoundShare).add(executorShare);
+        uint256 sum = fee.add(jackpotShare).add(executorShare);
         require(sum < 1 ether, "should be less than 1 ether");
     }
 

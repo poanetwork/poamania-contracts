@@ -39,4 +39,8 @@ contract Random {
         }
         return false;
     }
+
+    function getNewRandom(uint256 _value) public pure returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(_value)));
+    }
 }
