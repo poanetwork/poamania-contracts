@@ -29,8 +29,9 @@ contract PoaMania is Initializable, Ownable, Random {
     uint256 public roundId;
     uint256 public startedAt;
     uint256 public blockTime; // avg block time in seconds
-
     uint256 public roundDuration;
+    uint256 public minDeposit;
+
     uint256 public fee;
     address public feeReceiver;
     uint256 public nextRoundShare;
@@ -57,7 +58,8 @@ contract PoaMania is Initializable, Ownable, Random {
         uint256 _nextRoundShare,
         uint256 _executorShare,
         uint256[2] memory _prizeSizes,
-        uint256 _blockTime
+        uint256 _blockTime,
+        uint256 _minDeposit
     ) public initializer {
         _transferOwnership(_owner);
         _setRoundDuration(_roundDuration);
@@ -68,14 +70,16 @@ contract PoaMania is Initializable, Ownable, Random {
         _validateSumOfShares();
         _setPrizeSizes(_prizeSizes);
         _setBlockTime(_blockTime);
+        _setMinDeposit(_minDeposit);
         Random._init(_randomContract);
         drawManager.create();
         _nextRound();
     }
 
     function deposit() external payable notLocked {
-        require(msg.value > 0, "zero value");
         drawManager.deposit(msg.sender, msg.value);
+        uint256 newDepositValue = balanceOf(msg.sender);
+        require(newDepositValue >= minDeposit, "should be greater than or equal to min deposit");
         emit Deposited(msg.sender, msg.value);
     }
 
@@ -87,6 +91,11 @@ contract PoaMania is Initializable, Ownable, Random {
 
     function withdraw(uint256 _amount) external notLocked {
         drawManager.withdraw(msg.sender, _amount);
+        uint256 newDepositValue = balanceOf(msg.sender);
+        require(
+            newDepositValue >= minDeposit || newDepositValue == 0,
+            "should be greater than or equal to min deposit"
+        );
         _send(msg.sender, _amount);
         emit Withdrawn(msg.sender, _amount);
     }
@@ -176,6 +185,10 @@ contract PoaMania is Initializable, Ownable, Random {
         _setBlockTime(_blockTime);
     }
 
+    function setMinDeposit(uint256 _minDeposit) external onlyOwner {
+        _setMinDeposit(_minDeposit);
+    }
+
     function balanceOf(address _user) public view returns (uint256) {
         return drawManager.balanceOf(_user);
     }
@@ -255,6 +268,10 @@ contract PoaMania is Initializable, Ownable, Random {
     function _setBlockTime(uint256 _blockTime) internal {
         require(_blockTime > 0, "should be greater than 0");
         blockTime = _blockTime;
+    }
+
+    function _setMinDeposit(uint256 _minDeposit) internal {
+        minDeposit = _minDeposit;
     }
 
     function _validateSumOfShares() internal view {
