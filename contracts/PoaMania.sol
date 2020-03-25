@@ -1,13 +1,12 @@
 pragma solidity ^0.5.16;
 
-import "@openzeppelin/upgrades/contracts/Initializable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "./Random.sol";
 import "./DrawManager.sol";
 import "./Sacrifice.sol";
 
-contract PoaMania is Initializable, Ownable, Random {
+contract PoaMania is Ownable, Random {
     using SafeMath for uint256;
     using DrawManager for DrawManager.State;
 
@@ -70,7 +69,7 @@ contract PoaMania is Initializable, Ownable, Random {
         uint256 _jackpotShare,
         uint256 _jackpotChance
     ) public initializer {
-        _transferOwnership(_owner);
+        Ownable.initialize(_owner);
         _setRoundDuration(_roundDuration);
         _setFee(_fee);
         _setFeeReceiver(_feeReceiver);
