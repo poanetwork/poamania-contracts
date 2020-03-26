@@ -1,5 +1,5 @@
 const { accounts, contract } = require('@openzeppelin/test-environment');
-const { ether, BN } = require('@openzeppelin/test-helpers');
+const { ether, BN, expectRevert } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
 const PoaMania = contract.fromArtifact('PoaMania');
@@ -12,6 +12,7 @@ describe('PoaMania', function () {
   const roundDuration = 600;                       // in seconds
   const blockTime = 5;                             // in seconds
   const minDeposit = ether('100');                 // 100 POA
+  const maxDeposit = ether('500000');              // 500,000 POA
   const prizeSizes = [ether('0.5'), ether('0.3')]; // 50%, 30% and 20%
   const fee = ether('0.05');                       // 5%
   const feeReceiver = owner;
@@ -32,13 +33,14 @@ describe('PoaMania', function () {
     const randomContract = await RandomMock.new();
     this.contract = await PoaMania.new();
     await this.contract.contract.methods[
-      'initialize(address,address,uint256,uint256,uint256,uint256[2],uint256,address,uint256,uint256,uint256)'
+      'initialize(address,address,uint256,uint256,uint256,uint256,uint256[2],uint256,address,uint256,uint256,uint256)'
     ](
       owner,
       randomContract.address,
       roundDuration,
       blockTime,
       minDeposit.toString(),
+      maxDeposit.toString(),
       prizeSizes.map(item => item.toString()),
       fee.toString(),
       feeReceiver,
@@ -49,7 +51,7 @@ describe('PoaMania', function () {
   });
 
   describe('initialize', () => {
-    it('should be set up correctly', async function () {
+    it('should be set up correctly', async function() {
       expect(await this.contract.owner()).to.equal(owner);
       expect(await this.contract.roundId()).to.be.bignumber.equal(new BN(1));
       expect(await this.contract.startedAt()).to.be.bignumber.gt(new BN(0));
