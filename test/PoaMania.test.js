@@ -19,6 +19,9 @@ describe('PoaMania', function () {
   const roundCloserShare = ether('0.01');          // 1%
   const jackpotShare = ether('0.1');               // 10%
   const jackpotChance = ether('0.01');             // 1%
+  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+  const initializeMethod = 'initialize(address,address,uint256,uint256,uint256,uint256,uint256[2],uint256,address,uint256,uint256,uint256)';
 
   before(async function () {
     const sortitionSumTreeFactory = await SortitionSumTreeFactory.new();
@@ -30,13 +33,14 @@ describe('PoaMania', function () {
   });
 
   beforeEach(async function () {
-    const randomContract = await RandomMock.new();
+    this.randomContract = await RandomMock.new();
     this.contract = await PoaMania.new();
-    await this.contract.contract.methods[
-      'initialize(address,address,uint256,uint256,uint256,uint256,uint256[2],uint256,address,uint256,uint256,uint256)'
-    ](
+    this.initialize = function (...params) {
+      return this.contract.contract.methods[initializeMethod](...params).send({ from: owner, gas: 1000000 });
+    }
+    await this.initialize(
       owner,
-      randomContract.address,
+      this.randomContract.address,
       roundDuration,
       blockTime,
       minDeposit.toString(),
@@ -47,7 +51,7 @@ describe('PoaMania', function () {
       roundCloserShare.toString(),
       jackpotShare.toString(),
       jackpotChance.toString(),
-    ).send({ from: owner, gas: 1000000 });
+    );
   });
 
   describe('initialize', () => {
@@ -67,6 +71,162 @@ describe('PoaMania', function () {
       expect((await this.contract.getPrizeSizes())[0]).to.be.bignumber.equal(prizeSizes[0]);
       expect((await this.contract.getPrizeSizes())[1]).to.be.bignumber.equal(prizeSizes[1]);
       expect(await this.contract.numberOfParticipants()).to.be.bignumber.equal(new BN(0));
+    });
+    it('fails if any of parameters is incorrect', async function() {
+      this.contract = await PoaMania.new();
+      await expectRevert(
+        this.initialize(
+          ZERO_ADDRESS,
+          this.randomContract.address,
+          roundDuration,
+          blockTime,
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          prizeSizes.map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'zero address'
+      );
+      await expectRevert(
+        this.initialize(
+          owner,
+          ZERO_ADDRESS,
+          roundDuration,
+          blockTime,
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          prizeSizes.map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'Random/contract-zero'
+      );
+      await expectRevert(
+        this.initialize(
+          owner,
+          owner, // not a Random contract
+          roundDuration,
+          blockTime,
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          prizeSizes.map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'revert'
+      );
+      await expectRevert(
+        this.initialize(
+          owner,
+          this.randomContract.address,
+          0,
+          blockTime,
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          prizeSizes.map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'should be greater than 0'
+      );
+      await expectRevert(
+        this.initialize(
+          owner,
+          this.randomContract.address,
+          roundDuration,
+          0,
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          prizeSizes.map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'should be greater than 0'
+      );
+      await expectRevert(
+        this.initialize(
+          owner,
+          this.randomContract.address,
+          roundDuration,
+          blockTime,
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          [ether('0.5'), ether('0.6')].map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'should be less than or equal to 1 ether'
+      );
+      await expectRevert(
+        this.initialize(
+          owner,
+          this.randomContract.address,
+          roundDuration,
+          blockTime,
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          prizeSizes.map(item => item.toString()),
+          ether('0.34').toString(),
+          feeReceiver,
+          ether('0.34').toString(),
+          ether('0.34').toString(),
+          jackpotChance.toString(),
+        ),
+        'should be less than 1 ether'
+      );
+      await expectRevert(
+        this.initialize(
+          owner,
+          this.randomContract.address,
+          roundDuration,
+          blockTime,
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          prizeSizes.map(item => item.toString()),
+          fee.toString(),
+          ZERO_ADDRESS,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'zero address'
+      );
+      await expectRevert(
+        this.initialize(
+          owner,
+          this.randomContract.address,
+          roundDuration,
+          blockTime,
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          prizeSizes.map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          ether('1.1').toString(),
+        ),
+        'should be less than or equal to 1 ether'
+      );
     });
   });
 });
