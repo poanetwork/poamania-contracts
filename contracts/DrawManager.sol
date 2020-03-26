@@ -20,7 +20,6 @@ library DrawManager {
     }
 
     function deposit(State storage self, address _addr, uint256 _amount) public {
-        require(_amount > 0, "zero value");
         bytes32 userId = bytes32(uint256(_addr));
         uint256 currentAmount = self.sortitionSumTrees.stakeOf(TREE_OF_STAKES, userId);
         currentAmount = currentAmount.add(_amount);
@@ -34,7 +33,6 @@ library DrawManager {
     }
 
     function withdraw(State storage self, address _addr, uint256 _amount) public returns (uint256) {
-        require(_amount > 0, "zero value");
         bytes32 userId = bytes32(uint256(_addr));
         uint256 currentAmount = self.sortitionSumTrees.stakeOf(TREE_OF_STAKES, userId);
         uint256 remainingAmount = currentAmount.sub(_amount);

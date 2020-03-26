@@ -91,6 +91,7 @@ contract PoaMania is Ownable, Random {
     }
 
     function deposit() external payable notLocked {
+        require(msg.value > 0, "zero value");
         drawManager.deposit(msg.sender, msg.value);
         uint256 newDepositValue = balanceOf(msg.sender);
         require(newDepositValue >= minDeposit, "should be greater than or equal to min deposit");
@@ -100,11 +101,13 @@ contract PoaMania is Ownable, Random {
 
     function withdraw() external notLocked {
         uint256 amount = drawManager.withdraw(msg.sender);
+        require(amount > 0, "zero value");
         _send(msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
     }
 
     function withdraw(uint256 _amount) external notLocked {
+        require(_amount > 0, "zero value");
         drawManager.withdraw(msg.sender, _amount);
         uint256 newDepositValue = balanceOf(msg.sender);
         require(
