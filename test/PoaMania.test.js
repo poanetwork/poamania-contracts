@@ -1,5 +1,5 @@
 const { accounts, contract } = require('@openzeppelin/test-environment');
-const { ether, BN, expectRevert } = require('@openzeppelin/test-helpers');
+const { ether, BN, expectRevert, expectEvent } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
 const PoaMania = contract.fromArtifact('PoaMania');
@@ -8,10 +8,10 @@ const DrawManager = contract.fromArtifact('DrawManager');
 const SortitionSumTreeFactory = contract.fromArtifact('SortitionSumTreeFactory');
 
 describe('PoaMania', function () {
-  const [ owner ] = accounts;
+  const [owner, firstParticipant] = accounts;
   const roundDuration = 600;                       // in seconds
   const blockTime = 5;                             // in seconds
-  const minDeposit = ether('100');                 // 100 POA
+  const minDeposit = ether('10');                  // 10 POA
   const maxDeposit = ether('500000');              // 500,000 POA
   const prizeSizes = [ether('0.5'), ether('0.3')]; // 50%, 30% and 20%
   const fee = ether('0.05');                       // 5%
@@ -71,6 +71,7 @@ describe('PoaMania', function () {
       expect((await this.contract.getPrizeSizes())[0]).to.be.bignumber.equal(prizeSizes[0]);
       expect((await this.contract.getPrizeSizes())[1]).to.be.bignumber.equal(prizeSizes[1]);
       expect(await this.contract.numberOfParticipants()).to.be.bignumber.equal(new BN(0));
+      expect(await this.contract.totalDepositedBalance()).to.be.bignumber.equal(new BN(0));
     });
     it('fails if any of parameters is incorrect', async function() {
       this.contract = await PoaMania.new();
@@ -226,6 +227,33 @@ describe('PoaMania', function () {
           ether('1.1').toString(),
         ),
         'should be less than or equal to 1 ether'
+      );
+    });
+  });
+  describe('deposit', () => {
+    it('should deposit', async function() {
+      const receipt = await this.contract.deposit({ from: firstParticipant, value: minDeposit });
+      expect(await this.contract.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
+      expect(await this.contract.totalDepositedBalance()).to.be.bignumber.equal(minDeposit);
+      expect(await this.contract.balanceOf(firstParticipant)).to.be.bignumber.equal(minDeposit);
+      expectEvent(receipt, 'Deposited', { user: firstParticipant, amount: minDeposit });
+    });
+    it('fails if zero value', async function() {
+      await expectRevert(this.contract.deposit({ from: firstParticipant, value: '0' }), 'zero value');
+      await this.contract.deposit({ from: firstParticipant, value: minDeposit });
+      await expectRevert(this.contract.deposit({ from: firstParticipant, value: '0' }), 'zero value');
+    });
+    it('fails if less than min deposit', async function() {
+      await expectRevert(
+        this.contract.deposit({ from: firstParticipant, value: ether('9') }),
+        'should be greater than or equal to min deposit'
+      );
+    });
+    it('fails if greater than min deposit', async function() {
+      this.contract.setMaxDeposit(ether('15'), { from: owner });
+      await expectRevert(
+        this.contract.deposit({ from: firstParticipant, value: ether('16') }),
+        'should be less than or equal to max deposit'
       );
     });
   });
