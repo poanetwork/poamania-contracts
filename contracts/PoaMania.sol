@@ -100,14 +100,12 @@ contract PoaMania is Ownable, Random {
         emit Deposited(msg.sender, msg.value);
     }
 
-    function withdraw() external notLocked {
-        uint256 amount = drawManager.withdraw(msg.sender);
-        require(amount > 0, "zero value");
-        _send(msg.sender, amount);
-        emit Withdrawn(msg.sender, amount);
+    function withdraw() public notLocked {
+        uint256 amount = balanceOf(msg.sender);
+        withdraw(amount);
     }
 
-    function withdraw(uint256 _amount) external notLocked {
+    function withdraw(uint256 _amount) public notLocked {
         require(_amount > 0, "zero value");
         drawManager.withdraw(msg.sender, _amount);
         uint256 newDepositValue = balanceOf(msg.sender);
