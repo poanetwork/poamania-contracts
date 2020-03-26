@@ -8,7 +8,7 @@ const DrawManager = contract.fromArtifact('DrawManager');
 const SortitionSumTreeFactory = contract.fromArtifact('SortitionSumTreeFactory');
 
 describe('PoaMania', function () {
-  const [owner, firstParticipant] = accounts;
+  const [owner, firstParticipant, secondParticipant] = accounts;
   const roundDuration = 600;                       // in seconds
   const blockTime = 5;                             // in seconds
   const minDeposit = ether('10');                  // 10 POA
@@ -36,7 +36,7 @@ describe('PoaMania', function () {
     this.randomContract = await RandomMock.new();
     this.contract = await PoaMania.new();
     this.initialize = function (...params) {
-      return this.contract.contract.methods[initializeMethod](...params).send({ from: owner, gas: 1000000 });
+      return this.contract.methods[initializeMethod](...params, { from: owner });
     }
     await this.initialize(
       owner,
@@ -239,9 +239,9 @@ describe('PoaMania', function () {
       expectEvent(receipt, 'Deposited', { user: firstParticipant, amount: minDeposit });
     });
     it('fails if zero value', async function() {
-      await expectRevert(this.contract.deposit({ from: firstParticipant, value: '0' }), 'zero value');
+      await expectRevert(this.contract.deposit({ from: firstParticipant, value: 0 }), 'zero value');
       await this.contract.deposit({ from: firstParticipant, value: minDeposit });
-      await expectRevert(this.contract.deposit({ from: firstParticipant, value: '0' }), 'zero value');
+      await expectRevert(this.contract.deposit({ from: firstParticipant, value: 0 }), 'zero value');
     });
     it('fails if less than min deposit', async function() {
       await expectRevert(
@@ -254,6 +254,42 @@ describe('PoaMania', function () {
       await expectRevert(
         this.contract.deposit({ from: firstParticipant, value: ether('16') }),
         'should be less than or equal to max deposit'
+      );
+    });
+  });
+  describe('withdraw', () => {
+    beforeEach(async function() {
+      await this.contract.deposit({ from: firstParticipant, value: minDeposit });
+    });
+    it('should withdraw all', async function() {
+      const receipt = await this.contract.methods['withdraw()']({ from: firstParticipant });
+      expect(await this.contract.numberOfParticipants()).to.be.bignumber.equal(new BN(0));
+      expect(await this.contract.totalDepositedBalance()).to.be.bignumber.equal(new BN(0));
+      expect(await this.contract.balanceOf(firstParticipant)).to.be.bignumber.equal(new BN(0));
+      expectEvent(receipt, 'Withdrawn', { user: firstParticipant, amount: minDeposit });
+    });
+    it('should withdraw specified amount', async function() {
+      await this.contract.deposit({ from: firstParticipant, value: ether('5') });
+      const receipt = await this.contract.withdraw(ether('5'), { from: firstParticipant });
+      expect(await this.contract.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
+      expect(await this.contract.totalDepositedBalance()).to.be.bignumber.equal(minDeposit);
+      expect(await this.contract.balanceOf(firstParticipant)).to.be.bignumber.equal(minDeposit);
+      expectEvent(receipt, 'Withdrawn', { user: firstParticipant, amount: ether('5') });
+    });
+    it('fails if zero value', async function() {
+      await expectRevert(this.contract.methods['withdraw()']({ from: secondParticipant }), 'zero value');
+      await expectRevert(this.contract.withdraw(0, { from: firstParticipant }), 'zero value');
+    });
+    it('fails if less than min deposit', async function() {
+      await expectRevert(
+        this.contract.withdraw(ether('5'), { from: firstParticipant }),
+        'should be greater than or equal to min deposit'
+      );
+    });
+    it('fails if greater than user deposit', async function() {
+      await expectRevert(
+        this.contract.withdraw(ether('11'), { from: firstParticipant }),
+        'SafeMath: subtraction overflow'
       );
     });
   });
