@@ -72,6 +72,7 @@ contract PoaMania is Ownable, Random {
         uint256 _jackpotShare,
         uint256 _jackpotChance
     ) public initializer {
+        require(_owner != address(0), "zero address");
         Ownable.initialize(_owner);
         _setRoundDuration(_roundDuration);
         _setFee(_fee);
@@ -301,7 +302,7 @@ contract PoaMania is Ownable, Random {
     }
 
     function _setFeeReceiver(address _feeReceiver) internal {
-        require(_feeReceiver != address(0), "empty address");
+        require(_feeReceiver != address(0), "zero address");
         feeReceiver = _feeReceiver;
     }
 
