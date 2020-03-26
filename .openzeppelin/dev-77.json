@@ -1,11 +1,11 @@
 {
   "contracts": {
     "PoaMania": {
-      "address": "0xd43270023Bc5d111F9a4f659b64D5D4beAF01548",
-      "constructorCode": "6080604052613cf4806100136000396000f3fe",
-      "bodyBytecodeHash": "35d4916cc3c572c4bf6774f4dafed4e5242dabb7cc429d3cd7e7fd922d135b62",
-      "localBytecodeHash": "bd7f7eb6f0a06e6fa0adf437cbde731be0b20d29450fbbebae5a4eb79eb47424",
-      "deployedBytecodeHash": "9856401c54439524c82c5db4afae75140b5095bce8c927dd5366c755b05e4df3",
+      "address": "0x368b386152aAB4d345d2C3C0D660fc7c384fe07b",
+      "constructorCode": "6080604052613ee0806100136000396000f3fe",
+      "bodyBytecodeHash": "a3f82aaa25629a318a734119be310d41f84304acec0c1fdbb3cb3a9753d0e244",
+      "localBytecodeHash": "578bdf7a60253b8e5f5d9f8b5ed4a66b94ef3706274555be6f970d66c82fc390",
+      "deployedBytecodeHash": "1d805b72d5fc5a83446cf80608aeafe55ea5daeccc7d1e3056ef9474ac916259",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -175,7 +175,7 @@
           "contract": "Random",
           "path": "contracts/Random.sol",
           "label": "posdaoRandomContract",
-          "astId": 2543,
+          "astId": 2588,
           "type": "t_address",
           "src": "79:41:8"
         },
@@ -183,7 +183,7 @@
           "contract": "Random",
           "path": "contracts/Random.sol",
           "label": "_seed",
-          "astId": 2545,
+          "astId": 2590,
           "type": "t_uint256",
           "src": "127:21:8"
         },
@@ -191,7 +191,7 @@
           "contract": "Random",
           "path": "contracts/Random.sol",
           "label": "_seedLastBlock",
-          "astId": 2547,
+          "astId": 2592,
           "type": "t_uint256",
           "src": "154:30:8"
         },
@@ -199,7 +199,7 @@
           "contract": "Random",
           "path": "contracts/Random.sol",
           "label": "randomUpdateInterval",
-          "astId": 2549,
+          "astId": 2594,
           "type": "t_uint256",
           "src": "190:28:8"
         },
@@ -207,105 +207,113 @@
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "drawManager",
-          "astId": 1527,
+          "astId": 1524,
           "type": "t_struct<DrawManager.State>",
-          "src": "939:38:7"
+          "src": "863:38:7"
         },
         {
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "roundId",
-          "astId": 1529,
+          "astId": 1526,
           "type": "t_uint256",
-          "src": "984:22:7"
+          "src": "908:22:7"
         },
         {
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "startedAt",
-          "astId": 1531,
+          "astId": 1528,
           "type": "t_uint256",
-          "src": "1012:24:7"
+          "src": "936:24:7"
         },
         {
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "blockTime",
-          "astId": 1533,
+          "astId": 1530,
           "type": "t_uint256",
-          "src": "1042:24:7"
+          "src": "966:24:7"
         },
         {
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "roundDuration",
-          "astId": 1535,
+          "astId": 1532,
           "type": "t_uint256",
-          "src": "1101:28:7"
+          "src": "1025:28:7"
         },
         {
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "minDeposit",
-          "astId": 1537,
+          "astId": 1534,
           "type": "t_uint256",
-          "src": "1135:25:7"
+          "src": "1059:25:7"
         },
         {
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "fee",
-          "astId": 1539,
+          "astId": 1536,
           "type": "t_uint256",
-          "src": "1167:18:7"
+          "src": "1091:18:7"
         },
         {
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "feeReceiver",
-          "astId": 1541,
+          "astId": 1538,
           "type": "t_address",
-          "src": "1191:26:7"
+          "src": "1115:26:7"
         },
         {
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "executorShare",
-          "astId": 1543,
+          "astId": 1540,
           "type": "t_uint256",
-          "src": "1223:28:7"
+          "src": "1147:28:7"
         },
         {
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "jackpotShare",
-          "astId": 1545,
+          "astId": 1542,
           "type": "t_uint256",
-          "src": "1258:27:7"
+          "src": "1182:27:7"
         },
         {
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "jackpotChance",
-          "astId": 1547,
+          "astId": 1544,
           "type": "t_uint256",
-          "src": "1291:28:7"
+          "src": "1215:28:7"
         },
         {
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "jackpot",
-          "astId": 1549,
+          "astId": 1546,
           "type": "t_uint256",
-          "src": "1325:22:7"
+          "src": "1249:22:7"
         },
         {
           "contract": "PoaMania",
           "path": "contracts/PoaMania.sol",
           "label": "prizeSizes",
-          "astId": 1553,
+          "astId": 1550,
           "type": "t_array:2<t_uint256>",
-          "src": "1472:21:7"
+          "src": "1396:21:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "maxDeposit",
+          "astId": 1552,
+          "type": "t_uint256",
+          "src": "1424:25:7"
         }
       ],
       "warnings": {
@@ -313,7 +321,31 @@
         "hasSelfDestruct": false,
         "hasDelegateCall": false,
         "hasInitialValuesInDeclarations": false,
-        "uninitializedBaseContracts": []
+        "uninitializedBaseContracts": [],
+        "storageUncheckedVars": [
+          {
+            "contract": "PoaMania",
+            "path": "contracts/PoaMania.sol",
+            "label": "drawManager",
+            "astId": 1524,
+            "type": "t_struct<DrawManager.State>",
+            "src": "863:38:7"
+          }
+        ],
+        "storageDiff": [
+          {
+            "action": "append",
+            "updated": {
+              "index": 22,
+              "contract": "PoaMania",
+              "path": "contracts/PoaMania.sol",
+              "label": "maxDeposit",
+              "astId": 1552,
+              "type": "t_uint256",
+              "src": "1424:25:7"
+            }
+          }
+        ]
       }
     }
   },
@@ -338,7 +370,7 @@
       {
         "address": "0x9fa644CCF16cE358AFf9A86Cc2046a6C601b8F71",
         "version": "1.0.0",
-        "implementation": "0xd43270023Bc5d111F9a4f659b64D5D4beAF01548",
+        "implementation": "0x368b386152aAB4d345d2C3C0D660fc7c384fe07b",
         "admin": "0x25B718fAda14Df9BfA82125870a51abDC5E07868",
         "kind": "Upgradeable"
       }

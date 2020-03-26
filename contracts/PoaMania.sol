@@ -48,6 +48,8 @@ contract PoaMania is Ownable, Random {
     // The 3rd one is calculated using 2 previous
     uint256[2] prizeSizes;
 
+    uint256 public maxDeposit;
+
     modifier notLocked() {
         uint256 lockStart = getLockStart();
         require(block.timestamp < lockStart, "locked");
@@ -62,6 +64,7 @@ contract PoaMania is Ownable, Random {
         uint256 _roundDuration,
         uint256 _blockTime,
         uint256 _minDeposit,
+        uint256 _maxDeposit,
         uint256[2] memory _prizeSizes,
         uint256 _fee,
         address _feeReceiver,
@@ -80,6 +83,7 @@ contract PoaMania is Ownable, Random {
         _setPrizeSizes(_prizeSizes);
         _setBlockTime(_blockTime);
         _setMinDeposit(_minDeposit);
+        _setMaxDeposit(_maxDeposit);
         jackpot = 0;
         Random._init(_randomContract);
         drawManager.create();
@@ -90,6 +94,7 @@ contract PoaMania is Ownable, Random {
         drawManager.deposit(msg.sender, msg.value);
         uint256 newDepositValue = balanceOf(msg.sender);
         require(newDepositValue >= minDeposit, "should be greater than or equal to min deposit");
+        require(newDepositValue <= maxDeposit, "should be less than or equal to max deposit");
         emit Deposited(msg.sender, msg.value);
     }
 
@@ -217,6 +222,10 @@ contract PoaMania is Ownable, Random {
         _setMinDeposit(_minDeposit);
     }
 
+    function setMaxDeposit(uint256 _maxDeposit) external onlyOwner {
+        _setMaxDeposit(_maxDeposit);
+    }
+
     function balanceOf(address _user) public view returns (uint256) {
         return drawManager.balanceOf(_user);
     }
@@ -243,12 +252,7 @@ contract PoaMania is Ownable, Random {
         uint256 _roundDuration,
         uint256 _blockTime,
         uint256 _minDeposit,
-        uint256[2] memory _prizeSizes,
-        uint256 _fee,
-        address _feeReceiver,
-        uint256 _executorShare,
-        uint256 _jackpotShare,
-        uint256 _jackpotChance,
+        uint256 _maxDeposit,
         uint256 _jackpot,
         uint256 _lockStart,
         uint256 _totalDeposited
@@ -259,15 +263,28 @@ contract PoaMania is Ownable, Random {
             roundDuration,
             blockTime,
             minDeposit,
+            maxDeposit,
+            jackpot,
+            getLockStart(),
+            totalDepositedBalance()
+        );
+    }
+
+    function getShares() external view returns (
+        uint256[2] memory _prizeSizes,
+        uint256 _fee,
+        address _feeReceiver,
+        uint256 _executorShare,
+        uint256 _jackpotShare,
+        uint256 _jackpotChance
+    ) {
+        return (
             prizeSizes,
             fee,
             feeReceiver,
             executorShare,
             jackpotShare,
-            jackpotChance,
-            jackpot,
-            getLockStart(),
-            totalDepositedBalance()
+            jackpotChance
         );
     }
 
@@ -311,6 +328,10 @@ contract PoaMania is Ownable, Random {
 
     function _setMinDeposit(uint256 _minDeposit) internal {
         minDeposit = _minDeposit;
+    }
+
+    function _setMaxDeposit(uint256 _maxDeposit) internal {
+        maxDeposit = _maxDeposit;
     }
 
     function _validateSumOfShares() internal view {
