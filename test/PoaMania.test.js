@@ -9,8 +9,8 @@ const SortitionSumTreeFactory = contract.fromArtifact('SortitionSumTreeFactory')
 
 describe('PoaMania', function () {
   const [owner, firstParticipant, secondParticipant] = accounts;
-  const roundDuration = 600;                       // in seconds
-  const blockTime = 5;                             // in seconds
+  const roundDuration = new BN(600);                       // in seconds
+  const blockTime = new BN(5);                             // in seconds
   const minDeposit = ether('10');                  // 10 POA
   const maxDeposit = ether('500000');              // 500,000 POA
   const prizeSizes = [ether('0.5'), ether('0.3')]; // 50%, 30% and 20%
@@ -41,8 +41,8 @@ describe('PoaMania', function () {
     await this.initialize(
       owner,
       this.randomContract.address,
-      roundDuration,
-      blockTime,
+      roundDuration.toString(),
+      blockTime.toString(),
       minDeposit.toString(),
       maxDeposit.toString(),
       prizeSizes.map(item => item.toString()),
@@ -59,8 +59,8 @@ describe('PoaMania', function () {
       expect(await this.contract.owner()).to.equal(owner);
       expect(await this.contract.roundId()).to.be.bignumber.equal(new BN(1));
       expect(await this.contract.startedAt()).to.be.bignumber.gt(new BN(0));
-      expect(await this.contract.blockTime()).to.be.bignumber.equal(new BN(blockTime));
-      expect(await this.contract.roundDuration()).to.be.bignumber.equal(new BN(roundDuration));
+      expect(await this.contract.blockTime()).to.be.bignumber.equal(blockTime);
+      expect(await this.contract.roundDuration()).to.be.bignumber.equal(roundDuration);
       expect(await this.contract.minDeposit()).to.be.bignumber.equal(minDeposit);
       expect(await this.contract.fee()).to.be.bignumber.equal(fee);
       expect(await this.contract.feeReceiver()).to.equal(feeReceiver);
@@ -79,8 +79,8 @@ describe('PoaMania', function () {
         this.initialize(
           ZERO_ADDRESS,
           this.randomContract.address,
-          roundDuration,
-          blockTime,
+          roundDuration.toString(),
+          blockTime.toString(),
           minDeposit.toString(),
           maxDeposit.toString(),
           prizeSizes.map(item => item.toString()),
@@ -96,8 +96,8 @@ describe('PoaMania', function () {
         this.initialize(
           owner,
           ZERO_ADDRESS,
-          roundDuration,
-          blockTime,
+          roundDuration.toString(),
+          blockTime.toString(),
           minDeposit.toString(),
           maxDeposit.toString(),
           prizeSizes.map(item => item.toString()),
@@ -113,8 +113,8 @@ describe('PoaMania', function () {
         this.initialize(
           owner,
           owner, // not a Random contract
-          roundDuration,
-          blockTime,
+          roundDuration.toString(),
+          blockTime.toString(),
           minDeposit.toString(),
           maxDeposit.toString(),
           prizeSizes.map(item => item.toString()),
@@ -131,7 +131,7 @@ describe('PoaMania', function () {
           owner,
           this.randomContract.address,
           0,
-          blockTime,
+          blockTime.toString(),
           minDeposit.toString(),
           maxDeposit.toString(),
           prizeSizes.map(item => item.toString()),
@@ -147,7 +147,7 @@ describe('PoaMania', function () {
         this.initialize(
           owner,
           this.randomContract.address,
-          roundDuration,
+          roundDuration.toString(),
           0,
           minDeposit.toString(),
           maxDeposit.toString(),
@@ -164,8 +164,8 @@ describe('PoaMania', function () {
         this.initialize(
           owner,
           this.randomContract.address,
-          roundDuration,
-          blockTime,
+          roundDuration.toString(),
+          blockTime.toString(),
           minDeposit.toString(),
           maxDeposit.toString(),
           [ether('0.5'), ether('0.6')].map(item => item.toString()),
@@ -181,8 +181,8 @@ describe('PoaMania', function () {
         this.initialize(
           owner,
           this.randomContract.address,
-          roundDuration,
-          blockTime,
+          roundDuration.toString(),
+          blockTime.toString(),
           minDeposit.toString(),
           maxDeposit.toString(),
           prizeSizes.map(item => item.toString()),
@@ -198,8 +198,8 @@ describe('PoaMania', function () {
         this.initialize(
           owner,
           this.randomContract.address,
-          roundDuration,
-          blockTime,
+          roundDuration.toString(),
+          blockTime.toString(),
           minDeposit.toString(),
           maxDeposit.toString(),
           prizeSizes.map(item => item.toString()),
@@ -215,8 +215,8 @@ describe('PoaMania', function () {
         this.initialize(
           owner,
           this.randomContract.address,
-          roundDuration,
-          blockTime,
+          roundDuration.toString(),
+          blockTime.toString(),
           minDeposit.toString(),
           maxDeposit.toString(),
           prizeSizes.map(item => item.toString()),
@@ -290,6 +290,63 @@ describe('PoaMania', function () {
       await expectRevert(
         this.contract.withdraw(ether('11'), { from: firstParticipant }),
         'SafeMath: subtraction overflow'
+      );
+    });
+  });
+  describe('setRoundDuration', () => {
+    it('should set', async function() {
+      expect(await this.contract.roundDuration()).to.be.bignumber.equal(roundDuration);
+      await this.contract.setRoundDuration(1000, { from: owner });
+      expect(await this.contract.roundDuration()).to.be.bignumber.equal(new BN(1000));
+    });
+    it('fails if not an owner', async function() {
+      await expectRevert(
+        this.contract.setRoundDuration(1000, { from: firstParticipant }),
+        'Ownable: caller is not the owner'
+      );
+    });
+    it('fails if wrong value', async function() {
+      await expectRevert(
+        this.contract.setRoundDuration(0, { from: owner }),
+        'should be greater than 0'
+      );
+    });
+  });
+  describe('setFee', () => {
+    it('should set', async function() {
+      expect(await this.contract.fee()).to.be.bignumber.equal(fee);
+      await this.contract.setFee(ether('0.8'), { from: owner });
+      expect(await this.contract.fee()).to.be.bignumber.equal(ether('0.8'));
+    });
+    it('fails if not an owner', async function() {
+      await expectRevert(
+        this.contract.setFee(ether('0.8'), { from: firstParticipant }),
+        'Ownable: caller is not the owner'
+      );
+    });
+    it('fails if wrong value', async function() {
+      await expectRevert(
+        this.contract.setFee(ether('0.9'), { from: owner }),
+        'should be less than 1 ether'
+      );
+    });
+  });
+  describe.only('setFeeReceiver', () => {
+    it('should set', async function() {
+      expect(await this.contract.feeReceiver()).to.be.bignumber.equal(feeReceiver);
+      await this.contract.setFeeReceiver(firstParticipant, { from: owner });
+      expect(await this.contract.feeReceiver()).to.be.bignumber.equal(firstParticipant);
+    });
+    it('fails if not an owner', async function() {
+      await expectRevert(
+        this.contract.setFeeReceiver(firstParticipant, { from: firstParticipant }),
+        'Ownable: caller is not the owner'
+      );
+    });
+    it('fails if wrong value', async function() {
+      await expectRevert(
+        this.contract.setFeeReceiver(ZERO_ADDRESS, { from: owner }),
+        'zero address'
       );
     });
   });
