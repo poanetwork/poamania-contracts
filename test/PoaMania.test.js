@@ -331,7 +331,7 @@ describe('PoaMania', function () {
       );
     });
   });
-  describe.only('setFeeReceiver', () => {
+  describe('setFeeReceiver', () => {
     it('should set', async function() {
       expect(await this.contract.feeReceiver()).to.be.bignumber.equal(feeReceiver);
       await this.contract.setFeeReceiver(firstParticipant, { from: owner });
@@ -347,6 +347,129 @@ describe('PoaMania', function () {
       await expectRevert(
         this.contract.setFeeReceiver(ZERO_ADDRESS, { from: owner }),
         'zero address'
+      );
+    });
+  });
+  describe('setJackpotShare', () => {
+    it('should set', async function() {
+      expect(await this.contract.jackpotShare()).to.be.bignumber.equal(jackpotShare);
+      await this.contract.setJackpotShare(ether('0.8'), { from: owner });
+      expect(await this.contract.jackpotShare()).to.be.bignumber.equal(ether('0.8'));
+    });
+    it('fails if not an owner', async function() {
+      await expectRevert(
+        this.contract.setJackpotShare(ether('0.8'), { from: firstParticipant }),
+        'Ownable: caller is not the owner'
+      );
+    });
+    it('fails if wrong value', async function() {
+      await expectRevert(
+        this.contract.setJackpotShare(ether('0.95'), { from: owner }),
+        'should be less than 1 ether'
+      );
+    });
+  });
+  describe('setJackpotChance', () => {
+    it('should set', async function() {
+      expect(await this.contract.jackpotChance()).to.be.bignumber.equal(jackpotChance);
+      await this.contract.setJackpotChance(ether('0.8'), { from: owner });
+      expect(await this.contract.jackpotChance()).to.be.bignumber.equal(ether('0.8'));
+    });
+    it('fails if not an owner', async function() {
+      await expectRevert(
+        this.contract.setJackpotChance(ether('0.8'), { from: firstParticipant }),
+        'Ownable: caller is not the owner'
+      );
+    });
+    it('fails if wrong value', async function() {
+      await expectRevert(
+        this.contract.setJackpotChance(ether('1.01'), { from: owner }),
+        'should be less than or equal to 1 ether'
+      );
+    });
+  });
+  describe('setExecutorShare', () => {
+    it('should set', async function() {
+      expect(await this.contract.executorShare()).to.be.bignumber.equal(roundCloserShare);
+      await this.contract.setExecutorShare(ether('0.8'), { from: owner });
+      expect(await this.contract.executorShare()).to.be.bignumber.equal(ether('0.8'));
+    });
+    it('fails if not an owner', async function() {
+      await expectRevert(
+        this.contract.setExecutorShare(ether('0.8'), { from: firstParticipant }),
+        'Ownable: caller is not the owner'
+      );
+    });
+    it('fails if wrong value', async function() {
+      await expectRevert(
+        this.contract.setExecutorShare(ether('0.9'), { from: owner }),
+        'should be less than 1 ether'
+      );
+    });
+  });
+  describe('setPrizeSizes', () => {
+    it('should set', async function() {
+      expect((await this.contract.getPrizeSizes())[0]).to.be.bignumber.equal(prizeSizes[0]);
+      expect((await this.contract.getPrizeSizes())[1]).to.be.bignumber.equal(prizeSizes[1]);
+      await this.contract.setPrizeSizes([ether('0.8'), ether('0.1')], { from: owner });
+      expect((await this.contract.getPrizeSizes())[0]).to.be.bignumber.equal(ether('0.8'));
+      expect((await this.contract.getPrizeSizes())[1]).to.be.bignumber.equal(ether('0.1'));
+    });
+    it('fails if not an owner', async function() {
+      await expectRevert(
+        this.contract.setPrizeSizes([ether('0.8'), ether('0.1')], { from: firstParticipant }),
+        'Ownable: caller is not the owner'
+      );
+    });
+    it('fails if wrong value', async function() {
+      await expectRevert(
+        this.contract.setPrizeSizes([ether('0.8'), ether('0.25')], { from: owner }),
+        'should be less than or equal to 1 ether'
+      );
+    });
+  });
+  describe('setBlockTime', () => {
+    it('should set', async function() {
+      expect(await this.contract.blockTime()).to.be.bignumber.equal(blockTime);
+      await this.contract.setBlockTime(10, { from: owner });
+      expect(await this.contract.blockTime()).to.be.bignumber.equal(new BN(10));
+    });
+    it('fails if not an owner', async function() {
+      await expectRevert(
+        this.contract.setBlockTime(10, { from: firstParticipant }),
+        'Ownable: caller is not the owner'
+      );
+    });
+    it('fails if wrong value', async function() {
+      await expectRevert(
+        this.contract.setBlockTime(0, { from: owner }),
+        'should be greater than 0'
+      );
+    });
+  });
+  describe('setMinDeposit', () => {
+    it('should set', async function() {
+      expect(await this.contract.minDeposit()).to.be.bignumber.equal(minDeposit);
+      await this.contract.setMinDeposit(ether('20'), { from: owner });
+      expect(await this.contract.minDeposit()).to.be.bignumber.equal(ether('20'));
+    });
+    it('fails if not an owner', async function() {
+      await expectRevert(
+        this.contract.setMinDeposit(ether('20'), { from: firstParticipant }),
+        'Ownable: caller is not the owner'
+      );
+    });
+  });
+  describe('setMaxDeposit', () => {
+    it('should set', async function() {
+      expect(await this.contract.maxDeposit()).to.be.bignumber.equal(maxDeposit);
+      await this.contract.setMaxDeposit(ether('1000'), { from: owner });
+      expect(await this.contract.maxDeposit()).to.be.bignumber.equal(ether('1000'));
+    });
+    it('fails if not an owner', async function() {
+      await expectRevert(
+        this.contract.setMaxDeposit(ether('1000'), { from: firstParticipant }),
+        'Ownable: caller is not the owner'
       );
     });
   });
