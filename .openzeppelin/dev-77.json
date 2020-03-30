@@ -1,11 +1,11 @@
 {
   "contracts": {
     "PoaMania": {
-      "address": "0x178f0B52BDCf8291d07d30098c68EA97a0a35Cc8",
-      "constructorCode": "6080604052614042806100136000396000f3fe",
-      "bodyBytecodeHash": "4c84b6d3aec067927c4ff6bbc26e2421ba113240d97c2b9e5ff1b4b0587ad4f0",
-      "localBytecodeHash": "85880411b55b5a84521f60df4b3da5e75ffdc723914b1b3731488b140f57bfe0",
-      "deployedBytecodeHash": "3e2aa5685c78291320672be0706ea8397cd9a353d94b4f6b479c12c589e3dfd6",
+      "address": "0x6f04Cf809fe42aa1a05d5B65B42540EF52aDBf5B",
+      "constructorCode": "6080604052613ecc806100136000396000f3fe",
+      "bodyBytecodeHash": "2e9bb82bb1ab886da86404078f1bd7f9762b422e597af6499fcf06dfbe9dbc0b",
+      "localBytecodeHash": "aea8bcaeb9feb6b44843e7936824a7cf7e255193b7591d16649bb09dd19c5541",
+      "deployedBytecodeHash": "c668c01f96833dac41d9d3c11ee2c8c0e6c1cb8bcd36abbd86baaf09a4c61df7",
       "types": {
         "t_bool": {
           "id": "t_bool",
@@ -175,7 +175,7 @@
           "contract": "Random",
           "path": "contracts/Random.sol",
           "label": "posdaoRandomContract",
-          "astId": 2596,
+          "astId": 2591,
           "type": "t_address",
           "src": "79:41:8"
         },
@@ -183,7 +183,7 @@
           "contract": "Random",
           "path": "contracts/Random.sol",
           "label": "_seed",
-          "astId": 2598,
+          "astId": 2593,
           "type": "t_uint256",
           "src": "127:21:8"
         },
@@ -191,7 +191,7 @@
           "contract": "Random",
           "path": "contracts/Random.sol",
           "label": "_seedLastBlock",
-          "astId": 2600,
+          "astId": 2595,
           "type": "t_uint256",
           "src": "154:30:8"
         },
@@ -199,7 +199,7 @@
           "contract": "Random",
           "path": "contracts/Random.sol",
           "label": "randomUpdateInterval",
-          "astId": 2602,
+          "astId": 2597,
           "type": "t_uint256",
           "src": "190:28:8"
         },
@@ -357,7 +357,7 @@
       {
         "address": "0x9fa644CCF16cE358AFf9A86Cc2046a6C601b8F71",
         "version": "1.0.0",
-        "implementation": "0x178f0B52BDCf8291d07d30098c68EA97a0a35Cc8",
+        "implementation": "0x6f04Cf809fe42aa1a05d5B65B42540EF52aDBf5B",
         "admin": "0x25B718fAda14Df9BfA82125870a51abDC5E07868",
         "kind": "Upgradeable"
       }

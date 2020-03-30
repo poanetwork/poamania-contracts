@@ -162,7 +162,7 @@ contract PoaMania is Ownable, Random {
         }
 
         if (feeReceiver != address(0)) {
-            drawManager.deposit(feeReceiver, feeValue);
+            _send(address(uint160(feeReceiver)), feeValue);
         }
         drawManager.deposit(msg.sender, executorShareValue);
 
