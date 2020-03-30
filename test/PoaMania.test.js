@@ -1,5 +1,5 @@
 const { accounts, contract } = require('@openzeppelin/test-environment');
-const { ether, BN, expectRevert, expectEvent } = require('@openzeppelin/test-helpers');
+const { ether, BN, expectRevert, expectEvent, time, constants } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
 const PoaMania = contract.fromArtifact('PoaMania');
@@ -19,7 +19,6 @@ describe('PoaMania', () => {
   const roundCloserShare = ether('0.01');          // 1%
   const jackpotShare = ether('0.1');               // 10%
   const jackpotChance = ether('0.01');             // 1%
-  const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
   let contract;
   let randomContract;
@@ -84,7 +83,7 @@ describe('PoaMania', () => {
       contract = await PoaMania.new();
       await expectRevert(
         initialize(
-          ZERO_ADDRESS,
+          constants.ZERO_ADDRESS,
           randomContract.address,
           roundDuration.toString(),
           blockTime.toString(),
@@ -102,7 +101,7 @@ describe('PoaMania', () => {
       await expectRevert(
         initialize(
           owner,
-          ZERO_ADDRESS,
+          constants.ZERO_ADDRESS,
           roundDuration.toString(),
           blockTime.toString(),
           minDeposit.toString(),
@@ -211,7 +210,7 @@ describe('PoaMania', () => {
           maxDeposit.toString(),
           prizeSizes.map(item => item.toString()),
           fee.toString(),
-          ZERO_ADDRESS,
+          constants.ZERO_ADDRESS,
           roundCloserShare.toString(),
           jackpotShare.toString(),
           jackpotChance.toString(),
@@ -352,7 +351,7 @@ describe('PoaMania', () => {
     });
     it('fails if wrong value', async () => {
       await expectRevert(
-        contract.setFeeReceiver(ZERO_ADDRESS, { from: owner }),
+        contract.setFeeReceiver(constants.ZERO_ADDRESS, { from: owner }),
         'zero address'
       );
     });
