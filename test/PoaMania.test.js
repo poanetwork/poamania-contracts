@@ -1,5 +1,5 @@
 const { accounts, contract } = require('@openzeppelin/test-environment');
-const { ether, BN, expectRevert, expectEvent, time, constants } = require('@openzeppelin/test-helpers');
+const { ether, BN, expectRevert, expectEvent, time, constants, send } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
 const PoaMania = contract.fromArtifact('PoaMania');
@@ -20,7 +20,7 @@ describe('PoaMania', () => {
   const jackpotShare = ether('0.1');               // 10%
   const jackpotChance = ether('0.01');             // 1%
 
-  let contract;
+  let poaMania;
   let randomContract;
 
   const initializeMethod = 'initialize(address,address,uint256,uint256,uint256,uint256,uint256[2],uint256,address,uint256,uint256,uint256)';
@@ -42,7 +42,7 @@ describe('PoaMania', () => {
         jackpotChance.toString(),
       ];
     }
-    return contract.methods[initializeMethod](...params, { from: owner });
+    return poaMania.methods[initializeMethod](...params, { from: owner });
   }
 
   before(async () => {
@@ -56,31 +56,31 @@ describe('PoaMania', () => {
 
   beforeEach(async () => {
     randomContract = await RandomMock.new(40);
-    contract = await PoaMania.new();
+    poaMania = await PoaMania.new();
     await initialize();
   });
 
   describe('initialize', () => {
     it('should be set up correctly', async () => {
-      expect(await contract.owner()).to.equal(owner);
-      expect(await contract.roundId()).to.be.bignumber.equal(new BN(1));
-      expect(await contract.startedAt()).to.be.bignumber.gt(new BN(0));
-      expect(await contract.blockTime()).to.be.bignumber.equal(blockTime);
-      expect(await contract.roundDuration()).to.be.bignumber.equal(roundDuration);
-      expect(await contract.minDeposit()).to.be.bignumber.equal(minDeposit);
-      expect(await contract.fee()).to.be.bignumber.equal(fee);
-      expect(await contract.feeReceiver()).to.equal(feeReceiver);
-      expect(await contract.executorShare()).to.be.bignumber.equal(roundCloserShare);
-      expect(await contract.jackpotShare()).to.be.bignumber.equal(jackpotShare);
-      expect(await contract.jackpotChance()).to.be.bignumber.equal(jackpotChance);
-      expect(await contract.jackpot()).to.be.bignumber.equal(new BN(0));
-      expect((await contract.getPrizeSizes())[0]).to.be.bignumber.equal(prizeSizes[0]);
-      expect((await contract.getPrizeSizes())[1]).to.be.bignumber.equal(prizeSizes[1]);
-      expect(await contract.numberOfParticipants()).to.be.bignumber.equal(new BN(0));
-      expect(await contract.totalDepositedBalance()).to.be.bignumber.equal(new BN(0));
+      expect(await poaMania.owner()).to.equal(owner);
+      expect(await poaMania.roundId()).to.be.bignumber.equal(new BN(1));
+      expect(await poaMania.startedAt()).to.be.bignumber.gt(new BN(0));
+      expect(await poaMania.blockTime()).to.be.bignumber.equal(blockTime);
+      expect(await poaMania.roundDuration()).to.be.bignumber.equal(roundDuration);
+      expect(await poaMania.minDeposit()).to.be.bignumber.equal(minDeposit);
+      expect(await poaMania.fee()).to.be.bignumber.equal(fee);
+      expect(await poaMania.feeReceiver()).to.equal(feeReceiver);
+      expect(await poaMania.executorShare()).to.be.bignumber.equal(roundCloserShare);
+      expect(await poaMania.jackpotShare()).to.be.bignumber.equal(jackpotShare);
+      expect(await poaMania.jackpotChance()).to.be.bignumber.equal(jackpotChance);
+      expect(await poaMania.jackpot()).to.be.bignumber.equal(new BN(0));
+      expect((await poaMania.getPrizeSizes())[0]).to.be.bignumber.equal(prizeSizes[0]);
+      expect((await poaMania.getPrizeSizes())[1]).to.be.bignumber.equal(prizeSizes[1]);
+      expect(await poaMania.numberOfParticipants()).to.be.bignumber.equal(new BN(0));
+      expect(await poaMania.totalDepositedBalance()).to.be.bignumber.equal(new BN(0));
     });
     it('fails if any of parameters is incorrect', async () => {
-      contract = await PoaMania.new();
+      poaMania = await PoaMania.new();
       await expectRevert(
         initialize(
           constants.ZERO_ADDRESS,
@@ -118,7 +118,7 @@ describe('PoaMania', () => {
       await expectRevert(
         initialize(
           owner,
-          owner, // not a Random contract
+          owner, // not a Random poaMania
           roundDuration.toString(),
           blockTime.toString(),
           minDeposit.toString(),
@@ -238,243 +238,243 @@ describe('PoaMania', () => {
   });
   describe('deposit', () => {
     it('should deposit', async () => {
-      const receipt = await contract.deposit({ from: firstParticipant, value: minDeposit });
-      expect(await contract.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
-      expect(await contract.totalDepositedBalance()).to.be.bignumber.equal(minDeposit);
-      expect(await contract.balanceOf(firstParticipant)).to.be.bignumber.equal(minDeposit);
+      const receipt = await poaMania.deposit({ from: firstParticipant, value: minDeposit });
+      expect(await poaMania.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
+      expect(await poaMania.totalDepositedBalance()).to.be.bignumber.equal(minDeposit);
+      expect(await poaMania.balanceOf(firstParticipant)).to.be.bignumber.equal(minDeposit);
       expectEvent(receipt, 'Deposited', { user: firstParticipant, amount: minDeposit });
     });
     it('fails if zero value', async () => {
-      await expectRevert(contract.deposit({ from: firstParticipant, value: 0 }), 'zero value');
-      await contract.deposit({ from: firstParticipant, value: minDeposit });
-      await expectRevert(contract.deposit({ from: firstParticipant, value: 0 }), 'zero value');
+      await expectRevert(poaMania.deposit({ from: firstParticipant, value: 0 }), 'zero value');
+      await poaMania.deposit({ from: firstParticipant, value: minDeposit });
+      await expectRevert(poaMania.deposit({ from: firstParticipant, value: 0 }), 'zero value');
     });
     it('fails if less than min deposit', async () => {
       await expectRevert(
-        contract.deposit({ from: firstParticipant, value: ether('9') }),
+        poaMania.deposit({ from: firstParticipant, value: ether('9') }),
         'should be greater than or equal to min deposit'
       );
     });
     it('fails if greater than min deposit', async () => {
-      contract.setMaxDeposit(ether('15'), { from: owner });
+      poaMania.setMaxDeposit(ether('15'), { from: owner });
       await expectRevert(
-        contract.deposit({ from: firstParticipant, value: ether('16') }),
+        poaMania.deposit({ from: firstParticipant, value: ether('16') }),
         'should be less than or equal to max deposit'
       );
     });
   });
   describe('withdraw', () => {
     beforeEach(async () => {
-      await contract.deposit({ from: firstParticipant, value: minDeposit });
+      await poaMania.deposit({ from: firstParticipant, value: minDeposit });
     });
     it('should withdraw all', async () => {
-      const receipt = await contract.methods['withdraw()']({ from: firstParticipant });
-      expect(await contract.numberOfParticipants()).to.be.bignumber.equal(new BN(0));
-      expect(await contract.totalDepositedBalance()).to.be.bignumber.equal(new BN(0));
-      expect(await contract.balanceOf(firstParticipant)).to.be.bignumber.equal(new BN(0));
+      const receipt = await poaMania.methods['withdraw()']({ from: firstParticipant });
+      expect(await poaMania.numberOfParticipants()).to.be.bignumber.equal(new BN(0));
+      expect(await poaMania.totalDepositedBalance()).to.be.bignumber.equal(new BN(0));
+      expect(await poaMania.balanceOf(firstParticipant)).to.be.bignumber.equal(new BN(0));
       expectEvent(receipt, 'Withdrawn', { user: firstParticipant, amount: minDeposit });
     });
     it('should withdraw specified amount', async () => {
-      await contract.deposit({ from: firstParticipant, value: ether('5') });
-      const receipt = await contract.withdraw(ether('5'), { from: firstParticipant });
-      expect(await contract.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
-      expect(await contract.totalDepositedBalance()).to.be.bignumber.equal(minDeposit);
-      expect(await contract.balanceOf(firstParticipant)).to.be.bignumber.equal(minDeposit);
+      await poaMania.deposit({ from: firstParticipant, value: ether('5') });
+      const receipt = await poaMania.withdraw(ether('5'), { from: firstParticipant });
+      expect(await poaMania.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
+      expect(await poaMania.totalDepositedBalance()).to.be.bignumber.equal(minDeposit);
+      expect(await poaMania.balanceOf(firstParticipant)).to.be.bignumber.equal(minDeposit);
       expectEvent(receipt, 'Withdrawn', { user: firstParticipant, amount: ether('5') });
     });
     it('fails if zero value', async () => {
-      await expectRevert(contract.methods['withdraw()']({ from: secondParticipant }), 'zero value');
-      await expectRevert(contract.withdraw(0, { from: firstParticipant }), 'zero value');
+      await expectRevert(poaMania.methods['withdraw()']({ from: secondParticipant }), 'zero value');
+      await expectRevert(poaMania.withdraw(0, { from: firstParticipant }), 'zero value');
     });
     it('fails if less than min deposit', async () => {
       await expectRevert(
-        contract.withdraw(ether('5'), { from: firstParticipant }),
+        poaMania.withdraw(ether('5'), { from: firstParticipant }),
         'should be greater than or equal to min deposit'
       );
     });
     it('fails if greater than user deposit', async () => {
       await expectRevert(
-        contract.withdraw(ether('11'), { from: firstParticipant }),
+        poaMania.withdraw(ether('11'), { from: firstParticipant }),
         'SafeMath: subtraction overflow'
       );
     });
   });
   describe('setRoundDuration', () => {
     it('should set', async () => {
-      expect(await contract.roundDuration()).to.be.bignumber.equal(roundDuration);
-      await contract.setRoundDuration(1000, { from: owner });
-      expect(await contract.roundDuration()).to.be.bignumber.equal(new BN(1000));
+      expect(await poaMania.roundDuration()).to.be.bignumber.equal(roundDuration);
+      await poaMania.setRoundDuration(1000, { from: owner });
+      expect(await poaMania.roundDuration()).to.be.bignumber.equal(new BN(1000));
     });
     it('fails if not an owner', async () => {
       await expectRevert(
-        contract.setRoundDuration(1000, { from: firstParticipant }),
+        poaMania.setRoundDuration(1000, { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
     it('fails if wrong value', async () => {
       await expectRevert(
-        contract.setRoundDuration(0, { from: owner }),
+        poaMania.setRoundDuration(0, { from: owner }),
         'should be greater than 0'
       );
     });
   });
   describe('setFee', () => {
     it('should set', async () => {
-      expect(await contract.fee()).to.be.bignumber.equal(fee);
-      await contract.setFee(ether('0.8'), { from: owner });
-      expect(await contract.fee()).to.be.bignumber.equal(ether('0.8'));
+      expect(await poaMania.fee()).to.be.bignumber.equal(fee);
+      await poaMania.setFee(ether('0.8'), { from: owner });
+      expect(await poaMania.fee()).to.be.bignumber.equal(ether('0.8'));
     });
     it('fails if not an owner', async () => {
       await expectRevert(
-        contract.setFee(ether('0.8'), { from: firstParticipant }),
+        poaMania.setFee(ether('0.8'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
     it('fails if wrong value', async () => {
       await expectRevert(
-        contract.setFee(ether('0.9'), { from: owner }),
+        poaMania.setFee(ether('0.9'), { from: owner }),
         'should be less than 1 ether'
       );
     });
   });
   describe('setFeeReceiver', () => {
     it('should set', async () => {
-      expect(await contract.feeReceiver()).to.be.bignumber.equal(feeReceiver);
-      await contract.setFeeReceiver(firstParticipant, { from: owner });
-      expect(await contract.feeReceiver()).to.be.bignumber.equal(firstParticipant);
+      expect(await poaMania.feeReceiver()).to.be.bignumber.equal(feeReceiver);
+      await poaMania.setFeeReceiver(firstParticipant, { from: owner });
+      expect(await poaMania.feeReceiver()).to.be.bignumber.equal(firstParticipant);
     });
     it('fails if not an owner', async () => {
       await expectRevert(
-        contract.setFeeReceiver(firstParticipant, { from: firstParticipant }),
+        poaMania.setFeeReceiver(firstParticipant, { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
     it('fails if wrong value', async () => {
       await expectRevert(
-        contract.setFeeReceiver(constants.ZERO_ADDRESS, { from: owner }),
+        poaMania.setFeeReceiver(constants.ZERO_ADDRESS, { from: owner }),
         'zero address'
       );
     });
   });
   describe('setJackpotShare', () => {
     it('should set', async () => {
-      expect(await contract.jackpotShare()).to.be.bignumber.equal(jackpotShare);
-      await contract.setJackpotShare(ether('0.8'), { from: owner });
-      expect(await contract.jackpotShare()).to.be.bignumber.equal(ether('0.8'));
+      expect(await poaMania.jackpotShare()).to.be.bignumber.equal(jackpotShare);
+      await poaMania.setJackpotShare(ether('0.8'), { from: owner });
+      expect(await poaMania.jackpotShare()).to.be.bignumber.equal(ether('0.8'));
     });
     it('fails if not an owner', async () => {
       await expectRevert(
-        contract.setJackpotShare(ether('0.8'), { from: firstParticipant }),
+        poaMania.setJackpotShare(ether('0.8'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
     it('fails if wrong value', async () => {
       await expectRevert(
-        contract.setJackpotShare(ether('0.95'), { from: owner }),
+        poaMania.setJackpotShare(ether('0.95'), { from: owner }),
         'should be less than 1 ether'
       );
     });
   });
   describe('setJackpotChance', () => {
     it('should set', async () => {
-      expect(await contract.jackpotChance()).to.be.bignumber.equal(jackpotChance);
-      await contract.setJackpotChance(ether('0.8'), { from: owner });
-      expect(await contract.jackpotChance()).to.be.bignumber.equal(ether('0.8'));
+      expect(await poaMania.jackpotChance()).to.be.bignumber.equal(jackpotChance);
+      await poaMania.setJackpotChance(ether('0.8'), { from: owner });
+      expect(await poaMania.jackpotChance()).to.be.bignumber.equal(ether('0.8'));
     });
     it('fails if not an owner', async () => {
       await expectRevert(
-        contract.setJackpotChance(ether('0.8'), { from: firstParticipant }),
+        poaMania.setJackpotChance(ether('0.8'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
     it('fails if wrong value', async () => {
       await expectRevert(
-        contract.setJackpotChance(ether('1.01'), { from: owner }),
+        poaMania.setJackpotChance(ether('1.01'), { from: owner }),
         'should be less than or equal to 1 ether'
       );
     });
   });
   describe('setExecutorShare', () => {
     it('should set', async () => {
-      expect(await contract.executorShare()).to.be.bignumber.equal(roundCloserShare);
-      await contract.setExecutorShare(ether('0.8'), { from: owner });
-      expect(await contract.executorShare()).to.be.bignumber.equal(ether('0.8'));
+      expect(await poaMania.executorShare()).to.be.bignumber.equal(roundCloserShare);
+      await poaMania.setExecutorShare(ether('0.8'), { from: owner });
+      expect(await poaMania.executorShare()).to.be.bignumber.equal(ether('0.8'));
     });
     it('fails if not an owner', async () => {
       await expectRevert(
-        contract.setExecutorShare(ether('0.8'), { from: firstParticipant }),
+        poaMania.setExecutorShare(ether('0.8'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
     it('fails if wrong value', async () => {
       await expectRevert(
-        contract.setExecutorShare(ether('0.9'), { from: owner }),
+        poaMania.setExecutorShare(ether('0.9'), { from: owner }),
         'should be less than 1 ether'
       );
     });
   });
   describe('setPrizeSizes', () => {
     it('should set', async () => {
-      expect((await contract.getPrizeSizes())[0]).to.be.bignumber.equal(prizeSizes[0]);
-      expect((await contract.getPrizeSizes())[1]).to.be.bignumber.equal(prizeSizes[1]);
-      await contract.setPrizeSizes([ether('0.8'), ether('0.1')], { from: owner });
-      expect((await contract.getPrizeSizes())[0]).to.be.bignumber.equal(ether('0.8'));
-      expect((await contract.getPrizeSizes())[1]).to.be.bignumber.equal(ether('0.1'));
+      expect((await poaMania.getPrizeSizes())[0]).to.be.bignumber.equal(prizeSizes[0]);
+      expect((await poaMania.getPrizeSizes())[1]).to.be.bignumber.equal(prizeSizes[1]);
+      await poaMania.setPrizeSizes([ether('0.8'), ether('0.1')], { from: owner });
+      expect((await poaMania.getPrizeSizes())[0]).to.be.bignumber.equal(ether('0.8'));
+      expect((await poaMania.getPrizeSizes())[1]).to.be.bignumber.equal(ether('0.1'));
     });
     it('fails if not an owner', async () => {
       await expectRevert(
-        contract.setPrizeSizes([ether('0.8'), ether('0.1')], { from: firstParticipant }),
+        poaMania.setPrizeSizes([ether('0.8'), ether('0.1')], { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
     it('fails if wrong value', async () => {
       await expectRevert(
-        contract.setPrizeSizes([ether('0.8'), ether('0.25')], { from: owner }),
+        poaMania.setPrizeSizes([ether('0.8'), ether('0.25')], { from: owner }),
         'should be less than or equal to 1 ether'
       );
     });
   });
   describe('setBlockTime', () => {
     it('should set', async () => {
-      expect(await contract.blockTime()).to.be.bignumber.equal(blockTime);
-      await contract.setBlockTime(10, { from: owner });
-      expect(await contract.blockTime()).to.be.bignumber.equal(new BN(10));
+      expect(await poaMania.blockTime()).to.be.bignumber.equal(blockTime);
+      await poaMania.setBlockTime(10, { from: owner });
+      expect(await poaMania.blockTime()).to.be.bignumber.equal(new BN(10));
     });
     it('fails if not an owner', async () => {
       await expectRevert(
-        contract.setBlockTime(10, { from: firstParticipant }),
+        poaMania.setBlockTime(10, { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
     it('fails if wrong value', async () => {
       await expectRevert(
-        contract.setBlockTime(0, { from: owner }),
+        poaMania.setBlockTime(0, { from: owner }),
         'should be greater than 0'
       );
     });
   });
   describe('setMinDeposit', () => {
     it('should set', async () => {
-      expect(await contract.minDeposit()).to.be.bignumber.equal(minDeposit);
-      await contract.setMinDeposit(ether('20'), { from: owner });
-      expect(await contract.minDeposit()).to.be.bignumber.equal(ether('20'));
+      expect(await poaMania.minDeposit()).to.be.bignumber.equal(minDeposit);
+      await poaMania.setMinDeposit(ether('20'), { from: owner });
+      expect(await poaMania.minDeposit()).to.be.bignumber.equal(ether('20'));
     });
     it('fails if not an owner', async () => {
       await expectRevert(
-        contract.setMinDeposit(ether('20'), { from: firstParticipant }),
+        poaMania.setMinDeposit(ether('20'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
   });
   describe('setMaxDeposit', () => {
     it('should set', async () => {
-      expect(await contract.maxDeposit()).to.be.bignumber.equal(maxDeposit);
-      await contract.setMaxDeposit(ether('1000'), { from: owner });
-      expect(await contract.maxDeposit()).to.be.bignumber.equal(ether('1000'));
+      expect(await poaMania.maxDeposit()).to.be.bignumber.equal(maxDeposit);
+      await poaMania.setMaxDeposit(ether('1000'), { from: owner });
+      expect(await poaMania.maxDeposit()).to.be.bignumber.equal(ether('1000'));
     });
     it('fails if not an owner', async () => {
       await expectRevert(
-        contract.setMaxDeposit(ether('1000'), { from: firstParticipant }),
+        poaMania.setMaxDeposit(ether('1000'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
