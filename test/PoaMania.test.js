@@ -1,5 +1,5 @@
 const { accounts, contract } = require('@openzeppelin/test-environment');
-const { ether, BN, expectRevert, expectEvent, time, constants, send } = require('@openzeppelin/test-helpers');
+const { ether, BN, expectRevert, expectEvent, time, constants, send, balance } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
 const PoaMania = contract.fromArtifact('PoaMania');
@@ -8,7 +8,7 @@ const DrawManager = contract.fromArtifact('DrawManager');
 const SortitionSumTreeFactory = contract.fromArtifact('SortitionSumTreeFactory');
 
 describe('PoaMania', () => {
-  const [owner, firstParticipant, secondParticipant] = accounts;
+  const [owner, firstParticipant, secondParticipant, thirdParticipant] = accounts;
   const roundDuration = new BN(600);                       // in seconds
   const blockTime = new BN(5);                             // in seconds
   const minDeposit = ether('10');                  // 10 POA
@@ -297,6 +297,81 @@ describe('PoaMania', () => {
         poaMania.withdraw(ether('11'), { from: firstParticipant }),
         'SafeMath: subtraction overflow'
       );
+    });
+  });
+  describe('nextRound', () => {
+    let prizeNetShare;
+
+    beforeEach(async () => {
+      randomContract = await RandomMock.new(2);
+      poaMania = await PoaMania.new();
+      await initialize();
+      await poaMania.setMinDeposit(ether('1'), { from: owner });
+      await poaMania.deposit({ from: firstParticipant, value: ether('1') });
+      await poaMania.deposit({ from: secondParticipant, value: ether('2') });
+      await poaMania.deposit({ from: thirdParticipant, value: ether('3') });
+
+      prizeNetShare = ether('1').sub(fee).sub(jackpotShare).sub(roundCloserShare);
+    });
+
+    function calculatePercentage(value, percentage) {
+      return value.mul(percentage).div(ether('1'));
+    }
+
+    async function goToTheEndOfRound() {
+      const startedAt = await poaMania.startedAt();
+      await time.increaseTo(startedAt.add(roundDuration).add(new BN(1)));
+      const isCommitPhase = await randomContract.isCommitPhase();
+      if (isCommitPhase) {
+        await time.advanceBlock(); // because next block there will be not a commit phase
+      }
+    }
+
+    function checkRewardedEvent(
+      receipt,
+      { roundId, winners, prizes, fee, feeReceiver, jackpotShare, executorReward, executor }
+    ) {
+      expectEvent(receipt, 'Rewarded', {
+        roundId,
+        fee,
+        feeReceiver,
+        jackpotShare,
+        executorReward,
+        executor,
+      });
+      winners.forEach(expectedWinner => {
+        const foundWinner = receipt.logs[0].args.winners.find(winner => winner === expectedWinner);
+        expect(foundWinner).to.not.be.undefined;
+      });
+      receipt.logs[0].args.prizes.forEach((prize, index) => {
+        expect(prize).to.be.bignumber.equal(prizes[index]);
+      });
+    }
+
+    it('should reward and start next round', async () => {
+      await send.ether(owner, poaMania.address, ether('10'));
+      const contractBalance = await balance.current(poaMania.address);
+      const jackpot = await poaMania.jackpot();
+      const totalDeposited = await poaMania.totalDepositedBalance();
+      const totalReward = contractBalance.sub(totalDeposited).sub(jackpot);
+      await goToTheEndOfRound();
+      const receipt = await poaMania.nextRound({ from: firstParticipant });
+      const prizeNet = calculatePercentage(totalReward, prizeNetShare);
+      const prizes = [
+        calculatePercentage(prizeNet, prizeSizes[0]),
+        calculatePercentage(prizeNet, prizeSizes[1]),
+        calculatePercentage(prizeNet, ether('1').sub(prizeSizes[0]).sub(prizeSizes[1]))
+      ];
+      checkRewardedEvent(receipt, {
+        roundId: new BN(1),
+        winners: [firstParticipant, secondParticipant, thirdParticipant],
+        prizes,
+        fee: calculatePercentage(totalReward, fee),
+        feeReceiver: owner,
+        jackpotShare: calculatePercentage(totalReward, jackpotShare),
+        executorReward: calculatePercentage(totalReward, roundCloserShare),
+        executor: firstParticipant
+      });
     });
   });
   describe('setRoundDuration', () => {
