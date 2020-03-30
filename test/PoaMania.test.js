@@ -373,6 +373,26 @@ describe('PoaMania', () => {
         executor: firstParticipant
       });
     });
+    it('fails if the round is not over yet', async () => {
+      await expectRevert(
+        poaMania.nextRound({ from: firstParticipant }),
+        'the round is not over yet'
+      );
+    });
+    it('fails if random number was not updated', async () => {
+      randomContract = await RandomMock.new(4);
+      poaMania = await PoaMania.new();
+      await initialize();
+      await time.increase(roundDuration.add(new BN(1)));
+      await expectRevert(
+        poaMania.nextRound({ from: firstParticipant }),
+        'Random/seed-not-updated'
+      );
+      await time.advanceBlock();
+      await time.advanceBlock();
+      await time.advanceBlock();
+      await poaMania.nextRound({ from: firstParticipant });
+    });
   });
   describe('setRoundDuration', () => {
     it('should set', async () => {
