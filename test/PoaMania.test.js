@@ -7,7 +7,7 @@ const RandomMock = contract.fromArtifact('RandomMock');
 const DrawManager = contract.fromArtifact('DrawManager');
 const SortitionSumTreeFactory = contract.fromArtifact('SortitionSumTreeFactory');
 
-describe('PoaMania', function () {
+describe('PoaMania', () => {
   const [owner, firstParticipant, secondParticipant] = accounts;
   const roundDuration = new BN(600);                       // in seconds
   const blockTime = new BN(5);                             // in seconds
@@ -21,9 +21,32 @@ describe('PoaMania', function () {
   const jackpotChance = ether('0.01');             // 1%
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
+  let contract;
+  let randomContract;
+
   const initializeMethod = 'initialize(address,address,uint256,uint256,uint256,uint256,uint256[2],uint256,address,uint256,uint256,uint256)';
 
-  before(async function () {
+  function initialize(...params) {
+    if (params.length === 0) {
+      params = [
+        owner,
+        randomContract.address,
+        roundDuration.toString(),
+        blockTime.toString(),
+        minDeposit.toString(),
+        maxDeposit.toString(),
+        prizeSizes.map(item => item.toString()),
+        fee.toString(),
+        feeReceiver,
+        roundCloserShare.toString(),
+        jackpotShare.toString(),
+        jackpotChance.toString(),
+      ];
+    }
+    return contract.methods[initializeMethod](...params, { from: owner });
+  }
+
+  before(async () => {
     const sortitionSumTreeFactory = await SortitionSumTreeFactory.new();
     await DrawManager.detectNetwork();
     await DrawManager.link('SortitionSumTreeFactory', sortitionSumTreeFactory.address);
@@ -32,53 +55,37 @@ describe('PoaMania', function () {
     await PoaMania.link('DrawManager', drawManager.address);
   });
 
-  beforeEach(async function () {
-    this.randomContract = await RandomMock.new();
-    this.contract = await PoaMania.new();
-    this.initialize = function (...params) {
-      return this.contract.methods[initializeMethod](...params, { from: owner });
-    }
-    await this.initialize(
-      owner,
-      this.randomContract.address,
-      roundDuration.toString(),
-      blockTime.toString(),
-      minDeposit.toString(),
-      maxDeposit.toString(),
-      prizeSizes.map(item => item.toString()),
-      fee.toString(),
-      feeReceiver,
-      roundCloserShare.toString(),
-      jackpotShare.toString(),
-      jackpotChance.toString(),
-    );
+  beforeEach(async () => {
+    randomContract = await RandomMock.new(40);
+    contract = await PoaMania.new();
+    await initialize();
   });
 
   describe('initialize', () => {
-    it('should be set up correctly', async function() {
-      expect(await this.contract.owner()).to.equal(owner);
-      expect(await this.contract.roundId()).to.be.bignumber.equal(new BN(1));
-      expect(await this.contract.startedAt()).to.be.bignumber.gt(new BN(0));
-      expect(await this.contract.blockTime()).to.be.bignumber.equal(blockTime);
-      expect(await this.contract.roundDuration()).to.be.bignumber.equal(roundDuration);
-      expect(await this.contract.minDeposit()).to.be.bignumber.equal(minDeposit);
-      expect(await this.contract.fee()).to.be.bignumber.equal(fee);
-      expect(await this.contract.feeReceiver()).to.equal(feeReceiver);
-      expect(await this.contract.executorShare()).to.be.bignumber.equal(roundCloserShare);
-      expect(await this.contract.jackpotShare()).to.be.bignumber.equal(jackpotShare);
-      expect(await this.contract.jackpotChance()).to.be.bignumber.equal(jackpotChance);
-      expect(await this.contract.jackpot()).to.be.bignumber.equal(new BN(0));
-      expect((await this.contract.getPrizeSizes())[0]).to.be.bignumber.equal(prizeSizes[0]);
-      expect((await this.contract.getPrizeSizes())[1]).to.be.bignumber.equal(prizeSizes[1]);
-      expect(await this.contract.numberOfParticipants()).to.be.bignumber.equal(new BN(0));
-      expect(await this.contract.totalDepositedBalance()).to.be.bignumber.equal(new BN(0));
+    it('should be set up correctly', async () => {
+      expect(await contract.owner()).to.equal(owner);
+      expect(await contract.roundId()).to.be.bignumber.equal(new BN(1));
+      expect(await contract.startedAt()).to.be.bignumber.gt(new BN(0));
+      expect(await contract.blockTime()).to.be.bignumber.equal(blockTime);
+      expect(await contract.roundDuration()).to.be.bignumber.equal(roundDuration);
+      expect(await contract.minDeposit()).to.be.bignumber.equal(minDeposit);
+      expect(await contract.fee()).to.be.bignumber.equal(fee);
+      expect(await contract.feeReceiver()).to.equal(feeReceiver);
+      expect(await contract.executorShare()).to.be.bignumber.equal(roundCloserShare);
+      expect(await contract.jackpotShare()).to.be.bignumber.equal(jackpotShare);
+      expect(await contract.jackpotChance()).to.be.bignumber.equal(jackpotChance);
+      expect(await contract.jackpot()).to.be.bignumber.equal(new BN(0));
+      expect((await contract.getPrizeSizes())[0]).to.be.bignumber.equal(prizeSizes[0]);
+      expect((await contract.getPrizeSizes())[1]).to.be.bignumber.equal(prizeSizes[1]);
+      expect(await contract.numberOfParticipants()).to.be.bignumber.equal(new BN(0));
+      expect(await contract.totalDepositedBalance()).to.be.bignumber.equal(new BN(0));
     });
-    it('fails if any of parameters is incorrect', async function() {
-      this.contract = await PoaMania.new();
+    it('fails if any of parameters is incorrect', async () => {
+      contract = await PoaMania.new();
       await expectRevert(
-        this.initialize(
+        initialize(
           ZERO_ADDRESS,
-          this.randomContract.address,
+          randomContract.address,
           roundDuration.toString(),
           blockTime.toString(),
           minDeposit.toString(),
@@ -93,7 +100,7 @@ describe('PoaMania', function () {
         'zero address'
       );
       await expectRevert(
-        this.initialize(
+        initialize(
           owner,
           ZERO_ADDRESS,
           roundDuration.toString(),
@@ -110,7 +117,7 @@ describe('PoaMania', function () {
         'Random/contract-zero'
       );
       await expectRevert(
-        this.initialize(
+        initialize(
           owner,
           owner, // not a Random contract
           roundDuration.toString(),
@@ -127,9 +134,9 @@ describe('PoaMania', function () {
         'revert'
       );
       await expectRevert(
-        this.initialize(
+        initialize(
           owner,
-          this.randomContract.address,
+          randomContract.address,
           0,
           blockTime.toString(),
           minDeposit.toString(),
@@ -144,9 +151,9 @@ describe('PoaMania', function () {
         'should be greater than 0'
       );
       await expectRevert(
-        this.initialize(
+        initialize(
           owner,
-          this.randomContract.address,
+          randomContract.address,
           roundDuration.toString(),
           0,
           minDeposit.toString(),
@@ -161,9 +168,9 @@ describe('PoaMania', function () {
         'should be greater than 0'
       );
       await expectRevert(
-        this.initialize(
+        initialize(
           owner,
-          this.randomContract.address,
+          randomContract.address,
           roundDuration.toString(),
           blockTime.toString(),
           minDeposit.toString(),
@@ -178,9 +185,9 @@ describe('PoaMania', function () {
         'should be less than or equal to 1 ether'
       );
       await expectRevert(
-        this.initialize(
+        initialize(
           owner,
-          this.randomContract.address,
+          randomContract.address,
           roundDuration.toString(),
           blockTime.toString(),
           minDeposit.toString(),
@@ -195,9 +202,9 @@ describe('PoaMania', function () {
         'should be less than 1 ether'
       );
       await expectRevert(
-        this.initialize(
+        initialize(
           owner,
-          this.randomContract.address,
+          randomContract.address,
           roundDuration.toString(),
           blockTime.toString(),
           minDeposit.toString(),
@@ -212,9 +219,9 @@ describe('PoaMania', function () {
         'zero address'
       );
       await expectRevert(
-        this.initialize(
+        initialize(
           owner,
-          this.randomContract.address,
+          randomContract.address,
           roundDuration.toString(),
           blockTime.toString(),
           minDeposit.toString(),
@@ -231,244 +238,244 @@ describe('PoaMania', function () {
     });
   });
   describe('deposit', () => {
-    it('should deposit', async function() {
-      const receipt = await this.contract.deposit({ from: firstParticipant, value: minDeposit });
-      expect(await this.contract.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
-      expect(await this.contract.totalDepositedBalance()).to.be.bignumber.equal(minDeposit);
-      expect(await this.contract.balanceOf(firstParticipant)).to.be.bignumber.equal(minDeposit);
+    it('should deposit', async () => {
+      const receipt = await contract.deposit({ from: firstParticipant, value: minDeposit });
+      expect(await contract.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
+      expect(await contract.totalDepositedBalance()).to.be.bignumber.equal(minDeposit);
+      expect(await contract.balanceOf(firstParticipant)).to.be.bignumber.equal(minDeposit);
       expectEvent(receipt, 'Deposited', { user: firstParticipant, amount: minDeposit });
     });
-    it('fails if zero value', async function() {
-      await expectRevert(this.contract.deposit({ from: firstParticipant, value: 0 }), 'zero value');
-      await this.contract.deposit({ from: firstParticipant, value: minDeposit });
-      await expectRevert(this.contract.deposit({ from: firstParticipant, value: 0 }), 'zero value');
+    it('fails if zero value', async () => {
+      await expectRevert(contract.deposit({ from: firstParticipant, value: 0 }), 'zero value');
+      await contract.deposit({ from: firstParticipant, value: minDeposit });
+      await expectRevert(contract.deposit({ from: firstParticipant, value: 0 }), 'zero value');
     });
-    it('fails if less than min deposit', async function() {
+    it('fails if less than min deposit', async () => {
       await expectRevert(
-        this.contract.deposit({ from: firstParticipant, value: ether('9') }),
+        contract.deposit({ from: firstParticipant, value: ether('9') }),
         'should be greater than or equal to min deposit'
       );
     });
-    it('fails if greater than min deposit', async function() {
-      this.contract.setMaxDeposit(ether('15'), { from: owner });
+    it('fails if greater than min deposit', async () => {
+      contract.setMaxDeposit(ether('15'), { from: owner });
       await expectRevert(
-        this.contract.deposit({ from: firstParticipant, value: ether('16') }),
+        contract.deposit({ from: firstParticipant, value: ether('16') }),
         'should be less than or equal to max deposit'
       );
     });
   });
   describe('withdraw', () => {
-    beforeEach(async function() {
-      await this.contract.deposit({ from: firstParticipant, value: minDeposit });
+    beforeEach(async () => {
+      await contract.deposit({ from: firstParticipant, value: minDeposit });
     });
-    it('should withdraw all', async function() {
-      const receipt = await this.contract.methods['withdraw()']({ from: firstParticipant });
-      expect(await this.contract.numberOfParticipants()).to.be.bignumber.equal(new BN(0));
-      expect(await this.contract.totalDepositedBalance()).to.be.bignumber.equal(new BN(0));
-      expect(await this.contract.balanceOf(firstParticipant)).to.be.bignumber.equal(new BN(0));
+    it('should withdraw all', async () => {
+      const receipt = await contract.methods['withdraw()']({ from: firstParticipant });
+      expect(await contract.numberOfParticipants()).to.be.bignumber.equal(new BN(0));
+      expect(await contract.totalDepositedBalance()).to.be.bignumber.equal(new BN(0));
+      expect(await contract.balanceOf(firstParticipant)).to.be.bignumber.equal(new BN(0));
       expectEvent(receipt, 'Withdrawn', { user: firstParticipant, amount: minDeposit });
     });
-    it('should withdraw specified amount', async function() {
-      await this.contract.deposit({ from: firstParticipant, value: ether('5') });
-      const receipt = await this.contract.withdraw(ether('5'), { from: firstParticipant });
-      expect(await this.contract.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
-      expect(await this.contract.totalDepositedBalance()).to.be.bignumber.equal(minDeposit);
-      expect(await this.contract.balanceOf(firstParticipant)).to.be.bignumber.equal(minDeposit);
+    it('should withdraw specified amount', async () => {
+      await contract.deposit({ from: firstParticipant, value: ether('5') });
+      const receipt = await contract.withdraw(ether('5'), { from: firstParticipant });
+      expect(await contract.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
+      expect(await contract.totalDepositedBalance()).to.be.bignumber.equal(minDeposit);
+      expect(await contract.balanceOf(firstParticipant)).to.be.bignumber.equal(minDeposit);
       expectEvent(receipt, 'Withdrawn', { user: firstParticipant, amount: ether('5') });
     });
-    it('fails if zero value', async function() {
-      await expectRevert(this.contract.methods['withdraw()']({ from: secondParticipant }), 'zero value');
-      await expectRevert(this.contract.withdraw(0, { from: firstParticipant }), 'zero value');
+    it('fails if zero value', async () => {
+      await expectRevert(contract.methods['withdraw()']({ from: secondParticipant }), 'zero value');
+      await expectRevert(contract.withdraw(0, { from: firstParticipant }), 'zero value');
     });
-    it('fails if less than min deposit', async function() {
+    it('fails if less than min deposit', async () => {
       await expectRevert(
-        this.contract.withdraw(ether('5'), { from: firstParticipant }),
+        contract.withdraw(ether('5'), { from: firstParticipant }),
         'should be greater than or equal to min deposit'
       );
     });
-    it('fails if greater than user deposit', async function() {
+    it('fails if greater than user deposit', async () => {
       await expectRevert(
-        this.contract.withdraw(ether('11'), { from: firstParticipant }),
+        contract.withdraw(ether('11'), { from: firstParticipant }),
         'SafeMath: subtraction overflow'
       );
     });
   });
   describe('setRoundDuration', () => {
-    it('should set', async function() {
-      expect(await this.contract.roundDuration()).to.be.bignumber.equal(roundDuration);
-      await this.contract.setRoundDuration(1000, { from: owner });
-      expect(await this.contract.roundDuration()).to.be.bignumber.equal(new BN(1000));
+    it('should set', async () => {
+      expect(await contract.roundDuration()).to.be.bignumber.equal(roundDuration);
+      await contract.setRoundDuration(1000, { from: owner });
+      expect(await contract.roundDuration()).to.be.bignumber.equal(new BN(1000));
     });
-    it('fails if not an owner', async function() {
+    it('fails if not an owner', async () => {
       await expectRevert(
-        this.contract.setRoundDuration(1000, { from: firstParticipant }),
+        contract.setRoundDuration(1000, { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
-    it('fails if wrong value', async function() {
+    it('fails if wrong value', async () => {
       await expectRevert(
-        this.contract.setRoundDuration(0, { from: owner }),
+        contract.setRoundDuration(0, { from: owner }),
         'should be greater than 0'
       );
     });
   });
   describe('setFee', () => {
-    it('should set', async function() {
-      expect(await this.contract.fee()).to.be.bignumber.equal(fee);
-      await this.contract.setFee(ether('0.8'), { from: owner });
-      expect(await this.contract.fee()).to.be.bignumber.equal(ether('0.8'));
+    it('should set', async () => {
+      expect(await contract.fee()).to.be.bignumber.equal(fee);
+      await contract.setFee(ether('0.8'), { from: owner });
+      expect(await contract.fee()).to.be.bignumber.equal(ether('0.8'));
     });
-    it('fails if not an owner', async function() {
+    it('fails if not an owner', async () => {
       await expectRevert(
-        this.contract.setFee(ether('0.8'), { from: firstParticipant }),
+        contract.setFee(ether('0.8'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
-    it('fails if wrong value', async function() {
+    it('fails if wrong value', async () => {
       await expectRevert(
-        this.contract.setFee(ether('0.9'), { from: owner }),
+        contract.setFee(ether('0.9'), { from: owner }),
         'should be less than 1 ether'
       );
     });
   });
   describe('setFeeReceiver', () => {
-    it('should set', async function() {
-      expect(await this.contract.feeReceiver()).to.be.bignumber.equal(feeReceiver);
-      await this.contract.setFeeReceiver(firstParticipant, { from: owner });
-      expect(await this.contract.feeReceiver()).to.be.bignumber.equal(firstParticipant);
+    it('should set', async () => {
+      expect(await contract.feeReceiver()).to.be.bignumber.equal(feeReceiver);
+      await contract.setFeeReceiver(firstParticipant, { from: owner });
+      expect(await contract.feeReceiver()).to.be.bignumber.equal(firstParticipant);
     });
-    it('fails if not an owner', async function() {
+    it('fails if not an owner', async () => {
       await expectRevert(
-        this.contract.setFeeReceiver(firstParticipant, { from: firstParticipant }),
+        contract.setFeeReceiver(firstParticipant, { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
-    it('fails if wrong value', async function() {
+    it('fails if wrong value', async () => {
       await expectRevert(
-        this.contract.setFeeReceiver(ZERO_ADDRESS, { from: owner }),
+        contract.setFeeReceiver(ZERO_ADDRESS, { from: owner }),
         'zero address'
       );
     });
   });
   describe('setJackpotShare', () => {
-    it('should set', async function() {
-      expect(await this.contract.jackpotShare()).to.be.bignumber.equal(jackpotShare);
-      await this.contract.setJackpotShare(ether('0.8'), { from: owner });
-      expect(await this.contract.jackpotShare()).to.be.bignumber.equal(ether('0.8'));
+    it('should set', async () => {
+      expect(await contract.jackpotShare()).to.be.bignumber.equal(jackpotShare);
+      await contract.setJackpotShare(ether('0.8'), { from: owner });
+      expect(await contract.jackpotShare()).to.be.bignumber.equal(ether('0.8'));
     });
-    it('fails if not an owner', async function() {
+    it('fails if not an owner', async () => {
       await expectRevert(
-        this.contract.setJackpotShare(ether('0.8'), { from: firstParticipant }),
+        contract.setJackpotShare(ether('0.8'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
-    it('fails if wrong value', async function() {
+    it('fails if wrong value', async () => {
       await expectRevert(
-        this.contract.setJackpotShare(ether('0.95'), { from: owner }),
+        contract.setJackpotShare(ether('0.95'), { from: owner }),
         'should be less than 1 ether'
       );
     });
   });
   describe('setJackpotChance', () => {
-    it('should set', async function() {
-      expect(await this.contract.jackpotChance()).to.be.bignumber.equal(jackpotChance);
-      await this.contract.setJackpotChance(ether('0.8'), { from: owner });
-      expect(await this.contract.jackpotChance()).to.be.bignumber.equal(ether('0.8'));
+    it('should set', async () => {
+      expect(await contract.jackpotChance()).to.be.bignumber.equal(jackpotChance);
+      await contract.setJackpotChance(ether('0.8'), { from: owner });
+      expect(await contract.jackpotChance()).to.be.bignumber.equal(ether('0.8'));
     });
-    it('fails if not an owner', async function() {
+    it('fails if not an owner', async () => {
       await expectRevert(
-        this.contract.setJackpotChance(ether('0.8'), { from: firstParticipant }),
+        contract.setJackpotChance(ether('0.8'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
-    it('fails if wrong value', async function() {
+    it('fails if wrong value', async () => {
       await expectRevert(
-        this.contract.setJackpotChance(ether('1.01'), { from: owner }),
+        contract.setJackpotChance(ether('1.01'), { from: owner }),
         'should be less than or equal to 1 ether'
       );
     });
   });
   describe('setExecutorShare', () => {
-    it('should set', async function() {
-      expect(await this.contract.executorShare()).to.be.bignumber.equal(roundCloserShare);
-      await this.contract.setExecutorShare(ether('0.8'), { from: owner });
-      expect(await this.contract.executorShare()).to.be.bignumber.equal(ether('0.8'));
+    it('should set', async () => {
+      expect(await contract.executorShare()).to.be.bignumber.equal(roundCloserShare);
+      await contract.setExecutorShare(ether('0.8'), { from: owner });
+      expect(await contract.executorShare()).to.be.bignumber.equal(ether('0.8'));
     });
-    it('fails if not an owner', async function() {
+    it('fails if not an owner', async () => {
       await expectRevert(
-        this.contract.setExecutorShare(ether('0.8'), { from: firstParticipant }),
+        contract.setExecutorShare(ether('0.8'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
-    it('fails if wrong value', async function() {
+    it('fails if wrong value', async () => {
       await expectRevert(
-        this.contract.setExecutorShare(ether('0.9'), { from: owner }),
+        contract.setExecutorShare(ether('0.9'), { from: owner }),
         'should be less than 1 ether'
       );
     });
   });
   describe('setPrizeSizes', () => {
-    it('should set', async function() {
-      expect((await this.contract.getPrizeSizes())[0]).to.be.bignumber.equal(prizeSizes[0]);
-      expect((await this.contract.getPrizeSizes())[1]).to.be.bignumber.equal(prizeSizes[1]);
-      await this.contract.setPrizeSizes([ether('0.8'), ether('0.1')], { from: owner });
-      expect((await this.contract.getPrizeSizes())[0]).to.be.bignumber.equal(ether('0.8'));
-      expect((await this.contract.getPrizeSizes())[1]).to.be.bignumber.equal(ether('0.1'));
+    it('should set', async () => {
+      expect((await contract.getPrizeSizes())[0]).to.be.bignumber.equal(prizeSizes[0]);
+      expect((await contract.getPrizeSizes())[1]).to.be.bignumber.equal(prizeSizes[1]);
+      await contract.setPrizeSizes([ether('0.8'), ether('0.1')], { from: owner });
+      expect((await contract.getPrizeSizes())[0]).to.be.bignumber.equal(ether('0.8'));
+      expect((await contract.getPrizeSizes())[1]).to.be.bignumber.equal(ether('0.1'));
     });
-    it('fails if not an owner', async function() {
+    it('fails if not an owner', async () => {
       await expectRevert(
-        this.contract.setPrizeSizes([ether('0.8'), ether('0.1')], { from: firstParticipant }),
+        contract.setPrizeSizes([ether('0.8'), ether('0.1')], { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
-    it('fails if wrong value', async function() {
+    it('fails if wrong value', async () => {
       await expectRevert(
-        this.contract.setPrizeSizes([ether('0.8'), ether('0.25')], { from: owner }),
+        contract.setPrizeSizes([ether('0.8'), ether('0.25')], { from: owner }),
         'should be less than or equal to 1 ether'
       );
     });
   });
   describe('setBlockTime', () => {
-    it('should set', async function() {
-      expect(await this.contract.blockTime()).to.be.bignumber.equal(blockTime);
-      await this.contract.setBlockTime(10, { from: owner });
-      expect(await this.contract.blockTime()).to.be.bignumber.equal(new BN(10));
+    it('should set', async () => {
+      expect(await contract.blockTime()).to.be.bignumber.equal(blockTime);
+      await contract.setBlockTime(10, { from: owner });
+      expect(await contract.blockTime()).to.be.bignumber.equal(new BN(10));
     });
-    it('fails if not an owner', async function() {
+    it('fails if not an owner', async () => {
       await expectRevert(
-        this.contract.setBlockTime(10, { from: firstParticipant }),
+        contract.setBlockTime(10, { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
-    it('fails if wrong value', async function() {
+    it('fails if wrong value', async () => {
       await expectRevert(
-        this.contract.setBlockTime(0, { from: owner }),
+        contract.setBlockTime(0, { from: owner }),
         'should be greater than 0'
       );
     });
   });
   describe('setMinDeposit', () => {
-    it('should set', async function() {
-      expect(await this.contract.minDeposit()).to.be.bignumber.equal(minDeposit);
-      await this.contract.setMinDeposit(ether('20'), { from: owner });
-      expect(await this.contract.minDeposit()).to.be.bignumber.equal(ether('20'));
+    it('should set', async () => {
+      expect(await contract.minDeposit()).to.be.bignumber.equal(minDeposit);
+      await contract.setMinDeposit(ether('20'), { from: owner });
+      expect(await contract.minDeposit()).to.be.bignumber.equal(ether('20'));
     });
-    it('fails if not an owner', async function() {
+    it('fails if not an owner', async () => {
       await expectRevert(
-        this.contract.setMinDeposit(ether('20'), { from: firstParticipant }),
+        contract.setMinDeposit(ether('20'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });
   });
   describe('setMaxDeposit', () => {
-    it('should set', async function() {
-      expect(await this.contract.maxDeposit()).to.be.bignumber.equal(maxDeposit);
-      await this.contract.setMaxDeposit(ether('1000'), { from: owner });
-      expect(await this.contract.maxDeposit()).to.be.bignumber.equal(ether('1000'));
+    it('should set', async () => {
+      expect(await contract.maxDeposit()).to.be.bignumber.equal(maxDeposit);
+      await contract.setMaxDeposit(ether('1000'), { from: owner });
+      expect(await contract.maxDeposit()).to.be.bignumber.equal(ether('1000'));
     });
-    it('fails if not an owner', async function() {
+    it('fails if not an owner', async () => {
       await expectRevert(
-        this.contract.setMaxDeposit(ether('1000'), { from: firstParticipant }),
+        contract.setMaxDeposit(ether('1000'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
     });

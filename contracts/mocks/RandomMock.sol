@@ -3,7 +3,11 @@ pragma solidity ^0.5.16;
 import '../IPOSDAORandom.sol';
 
 contract RandomMock is IPOSDAORandom {
-    uint256 private _collectRoundLength = 40;
+    uint256 private _collectRoundLength;
+
+    constructor(uint256 _roundLength) public {
+        _collectRoundLength = _roundLength;
+    }
 
     function collectRoundLength() external view returns(uint256) {
         return _collectRoundLength;
