@@ -1,0 +1,367 @@
+{
+  "contracts": {
+    "PoaMania": {
+      "address": "0x0C31e682d401c465fdD05e40cE7149F8497B18E5",
+      "constructorCode": "6080604052613ecc806100136000396000f3fe",
+      "bodyBytecodeHash": "80cdd475d169d643c0b2d9367b7b0d4262a7b46ebd77b1eac6ee0bab1066d491",
+      "localBytecodeHash": "08a508b3b25eaea0b5d55f4b73e801a8c44d4a80bbfe988824199d03d0763200",
+      "deployedBytecodeHash": "5475bde87356dfad16ac56fb800f6c5a3b43fc832b6ee0742e9176b6e252e396",
+      "types": {
+        "t_bool": {
+          "id": "t_bool",
+          "kind": "elementary",
+          "label": "bool"
+        },
+        "t_uint256": {
+          "id": "t_uint256",
+          "kind": "elementary",
+          "label": "uint256"
+        },
+        "t_array:50<t_uint256>": {
+          "id": "t_array:50<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "50",
+          "kind": "array",
+          "label": "uint256[50]"
+        },
+        "t_address": {
+          "id": "t_address",
+          "kind": "elementary",
+          "label": "address"
+        },
+        "t_struct<DrawManager.State>": {
+          "id": "t_struct<DrawManager.State>",
+          "kind": "struct",
+          "label": "DrawManager.State",
+          "members": [
+            {
+              "label": "sortitionSumTrees",
+              "astId": 1204,
+              "type": "t_struct<SortitionSumTreeFactory.SortitionSumTrees>",
+              "src": "465:59:5"
+            }
+          ]
+        },
+        "t_struct<SortitionSumTreeFactory.SortitionSumTrees>": {
+          "id": "t_struct<SortitionSumTreeFactory.SortitionSumTrees>",
+          "kind": "struct",
+          "label": "SortitionSumTreeFactory.SortitionSumTrees",
+          "members": [
+            {
+              "label": "sortitionSumTrees",
+              "astId": 22,
+              "type": "t_mapping<t_struct<SortitionSumTreeFactory.SortitionSumTree>>",
+              "src": "1037:54:0"
+            }
+          ]
+        },
+        "t_struct<SortitionSumTreeFactory.SortitionSumTree>": {
+          "id": "t_struct<SortitionSumTreeFactory.SortitionSumTree>",
+          "kind": "struct",
+          "label": "SortitionSumTreeFactory.SortitionSumTree",
+          "members": [
+            {
+              "label": "K",
+              "astId": 3,
+              "type": "t_uint256",
+              "src": "442:6:0"
+            },
+            {
+              "label": "stack",
+              "astId": 6,
+              "type": "t_array:dyn<t_uint256>",
+              "src": "690:12:0"
+            },
+            {
+              "label": "nodes",
+              "astId": 9,
+              "type": "t_array:dyn<t_uint256>",
+              "src": "712:12:0"
+            },
+            {
+              "label": "IDsToNodeIndexes",
+              "astId": 13,
+              "type": "t_mapping<t_uint256>",
+              "src": "878:41:0"
+            },
+            {
+              "label": "nodeIndexesToIDs",
+              "astId": 17,
+              "type": "t_mapping<t_bytes32>",
+              "src": "929:41:0"
+            }
+          ]
+        },
+        "t_array:dyn<t_uint256>": {
+          "id": "t_array:dyn<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "dyn",
+          "kind": "array",
+          "label": "uint256[]"
+        },
+        "t_mapping<t_uint256>": {
+          "id": "t_mapping<t_uint256>",
+          "valueType": "t_uint256",
+          "label": "mapping(key => uint256)",
+          "kind": "mapping"
+        },
+        "t_bytes32": {
+          "id": "t_bytes32",
+          "kind": "elementary",
+          "label": "bytes32"
+        },
+        "t_mapping<t_bytes32>": {
+          "id": "t_mapping<t_bytes32>",
+          "valueType": "t_bytes32",
+          "label": "mapping(key => bytes32)",
+          "kind": "mapping"
+        },
+        "t_mapping<t_struct<SortitionSumTreeFactory.SortitionSumTree>>": {
+          "id": "t_mapping<t_struct<SortitionSumTreeFactory.SortitionSumTree>>",
+          "valueType": "t_struct<SortitionSumTreeFactory.SortitionSumTree>",
+          "label": "mapping(key => SortitionSumTreeFactory.SortitionSumTree)",
+          "kind": "mapping"
+        },
+        "t_array:2<t_uint256>": {
+          "id": "t_array:2<t_uint256>",
+          "valueType": "t_uint256",
+          "length": "2",
+          "kind": "array",
+          "label": "uint256[2]"
+        }
+      },
+      "storage": [
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initialized",
+          "astId": 1121,
+          "type": "t_bool",
+          "src": "757:24:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "initializing",
+          "astId": 1123,
+          "type": "t_bool",
+          "src": "876:25:4"
+        },
+        {
+          "contract": "Initializable",
+          "path": "@openzeppelin/upgrades/contracts/Initializable.sol",
+          "label": "______gap",
+          "astId": 1185,
+          "type": "t_array:50<t_uint256>",
+          "src": "1982:29:4"
+        },
+        {
+          "contract": "Ownable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol",
+          "label": "_owner",
+          "astId": 1003,
+          "type": "t_address",
+          "src": "526:22:3"
+        },
+        {
+          "contract": "Ownable",
+          "path": "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol",
+          "label": "______gap",
+          "astId": 1116,
+          "type": "t_array:50<t_uint256>",
+          "src": "2471:29:3"
+        },
+        {
+          "contract": "Random",
+          "path": "contracts/Random.sol",
+          "label": "posdaoRandomContract",
+          "astId": 2591,
+          "type": "t_address",
+          "src": "79:41:8"
+        },
+        {
+          "contract": "Random",
+          "path": "contracts/Random.sol",
+          "label": "_seed",
+          "astId": 2593,
+          "type": "t_uint256",
+          "src": "127:21:8"
+        },
+        {
+          "contract": "Random",
+          "path": "contracts/Random.sol",
+          "label": "_seedLastBlock",
+          "astId": 2595,
+          "type": "t_uint256",
+          "src": "154:30:8"
+        },
+        {
+          "contract": "Random",
+          "path": "contracts/Random.sol",
+          "label": "randomUpdateInterval",
+          "astId": 2597,
+          "type": "t_uint256",
+          "src": "190:28:8"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "drawManager",
+          "astId": 1510,
+          "type": "t_struct<DrawManager.State>",
+          "src": "863:38:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "roundId",
+          "astId": 1512,
+          "type": "t_uint256",
+          "src": "908:22:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "startedAt",
+          "astId": 1514,
+          "type": "t_uint256",
+          "src": "936:24:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "blockTime",
+          "astId": 1516,
+          "type": "t_uint256",
+          "src": "966:24:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "roundDuration",
+          "astId": 1518,
+          "type": "t_uint256",
+          "src": "1025:28:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "minDeposit",
+          "astId": 1520,
+          "type": "t_uint256",
+          "src": "1059:25:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "maxDeposit",
+          "astId": 1522,
+          "type": "t_uint256",
+          "src": "1090:25:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "fee",
+          "astId": 1524,
+          "type": "t_uint256",
+          "src": "1122:18:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "feeReceiver",
+          "astId": 1526,
+          "type": "t_address",
+          "src": "1146:26:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "executorShare",
+          "astId": 1528,
+          "type": "t_uint256",
+          "src": "1178:28:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "jackpotShare",
+          "astId": 1530,
+          "type": "t_uint256",
+          "src": "1213:27:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "jackpotChance",
+          "astId": 1532,
+          "type": "t_uint256",
+          "src": "1246:28:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "jackpot",
+          "astId": 1534,
+          "type": "t_uint256",
+          "src": "1280:22:7"
+        },
+        {
+          "contract": "PoaMania",
+          "path": "contracts/PoaMania.sol",
+          "label": "prizeSizes",
+          "astId": 1538,
+          "type": "t_array:2<t_uint256>",
+          "src": "1427:21:7"
+        }
+      ],
+      "warnings": {
+        "hasConstructor": false,
+        "hasSelfDestruct": false,
+        "hasDelegateCall": false,
+        "hasInitialValuesInDeclarations": false,
+        "uninitializedBaseContracts": []
+      }
+    }
+  },
+  "solidityLibs": {
+    "SortitionSumTreeFactory": {
+      "address": "0x345ab49aD007D0E8b4A1d9860D657c3D73b66717",
+      "constructorCode": "610cdd610026600b82828239805160001a60731461001957fe5b30600052607381538281f3fe",
+      "bodyBytecodeHash": "332d70e537680cddd7eeb01991fedaafb8d0542fc2c829fe424f4ab127e20365",
+      "localBytecodeHash": "96d23934f52c4ae63f3c1eeefd69f5aa8ac04ac3eefe91aee500c6809de79a53",
+      "deployedBytecodeHash": "96d23934f52c4ae63f3c1eeefd69f5aa8ac04ac3eefe91aee500c6809de79a53"
+    },
+    "DrawManager": {
+      "address": "0xa604ae3cE64d99774061B861b39212d020F78Ee8",
+      "constructorCode": "610df7610026600b82828239805160001a60731461001957fe5b30600052607381538281f3fe",
+      "bodyBytecodeHash": "cc1bf1e28893094ca40a3781c64a5ca0fc375cfc8c3769d6aa6bc506b262ca0f",
+      "localBytecodeHash": "3a3374e0d85a88bcdc7353a2008c9a3bd4d0df40e842bcacd46521c3c879d6f8",
+      "deployedBytecodeHash": "3e910e511987b2fafa92bd4586b67c396312bdfa6fb312d510e5335da513d383"
+    }
+  },
+  "proxies": {
+    "poa-mania/PoaMania": [
+      {
+        "address": "0xf7ECea96dA4951e88E699cfb67d909Ec74Ba917E",
+        "version": "1.0.0",
+        "implementation": "0x0C31e682d401c465fdD05e40cE7149F8497B18E5",
+        "admin": "0x92F35e10a24174f4451f3A021c9F1C562b62365A",
+        "kind": "Upgradeable"
+      }
+    ]
+  },
+  "manifestVersion": "2.2",
+  "dependencies": {
+    "@openzeppelin/contracts-ethereum-package": {
+      "package": "0x1944EAbF1Fc64A81Ce4e25D054A150A06e5c5716",
+      "version": "2.4.0",
+      "customDeploy": true
+    }
+  },
+  "version": "1.0.0",
+  "proxyAdmin": {
+    "address": "0x92F35e10a24174f4451f3A021c9F1C562b62365A"
+  }
+}
