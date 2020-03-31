@@ -1,6 +1,10 @@
 const HDWalletProvider = require('truffle-hdwallet-provider');
 require('dotenv').config();
 
+function getProvider(network) {
+  return () => new HDWalletProvider(process.env.MNEMONIC, `https://${network}.poa.network`);
+}
+
 module.exports = {
   networks: {
     development: {
@@ -12,9 +16,14 @@ module.exports = {
       networkId: '*',
     },
     sokol: {
-      provider: () => new HDWalletProvider(process.env.MNEMONIC, 'https://sokol.poa.network'),
+      provider: getProvider('sokol'),
       gasPrice: 1e9,
       networkId: 77,
+    },
+    core: {
+      provider: getProvider('core'),
+      gasPrice: 1e9,
+      networkId: 99,
     },
   },
 };
