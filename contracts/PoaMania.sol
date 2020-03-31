@@ -35,6 +35,7 @@ contract PoaMania is Ownable, Random {
     uint256 public blockTime; // avg block time in seconds
     uint256 public roundDuration;
     uint256 public minDeposit;
+    uint256 public maxDeposit;
 
     uint256 public fee;
     address public feeReceiver;
@@ -47,8 +48,6 @@ contract PoaMania is Ownable, Random {
     // 1st and 2nd winners prizes (in percentage. 100% == 1 ether).
     // The 3rd one is calculated using 2 previous
     uint256[2] prizeSizes;
-
-    uint256 public maxDeposit;
 
     modifier notLocked() {
         uint256 lockStart = getLockStart();
