@@ -432,6 +432,11 @@ describe('PoaMania', () => {
       await time.advanceBlock();
       await time.advanceBlock();
       await time.advanceBlock();
+      const isCommitPhase = await randomContract.isCommitPhase();
+      if (isCommitPhase) {
+        await time.advanceBlock();
+        await time.advanceBlock();
+      }
       await poaMania.nextRound({ from: firstParticipant });
     });
     it('should reward if only 1', async () => {
