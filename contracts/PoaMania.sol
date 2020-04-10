@@ -141,6 +141,7 @@ contract PoaMania is Ownable, Random {
         uint256 _jackpotChance
     ) public initializer {
         require(_owner != address(0), "zero address");
+        // initializes all params
         Ownable.initialize(_owner);
         _setRoundDuration(_roundDuration);
         _setFee(_fee);
@@ -155,7 +156,9 @@ contract PoaMania is Ownable, Random {
         _setMaxDeposit(_maxDeposit);
         jackpot = 0;
         Random._init(_randomContract);
+        // creates a tree of nodes
         drawManager.create();
+        // starts the first round
         _nextRound();
     }
 
@@ -165,6 +168,7 @@ contract PoaMania is Ownable, Random {
     function deposit() external payable notLocked {
         require(msg.value > 0, "zero value");
         drawManager.deposit(msg.sender, msg.value);
+        // checks that the new deposit balance is between mim and max deposits
         uint256 newDepositValue = balanceOf(msg.sender);
         require(newDepositValue >= minDeposit, "should be greater than or equal to min deposit");
         require(newDepositValue <= maxDeposit, "should be less than or equal to max deposit");
@@ -186,6 +190,7 @@ contract PoaMania is Ownable, Random {
     function withdraw(uint256 _amount) public notLocked {
         require(_amount > 0, "zero value");
         drawManager.withdraw(msg.sender, _amount);
+        // checks that the new deposit balance is greater than min deposit or equal to 0
         uint256 newDepositValue = balanceOf(msg.sender);
         require(
             newDepositValue >= minDeposit || newDepositValue == 0,
@@ -222,28 +227,40 @@ contract PoaMania is Ownable, Random {
         uint256 jackpotShareValue = _calculatePercentage(totalReward, jackpotShare);
         uint256 executorShareValue = _calculatePercentage(totalReward, executorShare);
 
+        // calculates the value of all 3 prizes
         uint256 winnersTotalPrize = totalReward.sub(feeValue).sub(jackpotShareValue).sub(executorShareValue);
         address[3] memory winners;
         uint256[3] memory winnersCurrentDeposits;
         uint256[3] memory prizeValues;
+        // calculates the value of each prize
         prizeValues[0] = _calculatePercentage(winnersTotalPrize, prizeSizes[0]);
         prizeValues[1] = _calculatePercentage(winnersTotalPrize, prizeSizes[1]);
         prizeValues[2] = winnersTotalPrize.sub(prizeValues[0]).sub(prizeValues[1]);
 
+        // takes the random seed
         uint256 seed = _useSeed();
+
+        // checks if the jackpot must be drawn
         address jackpotWinner;
         if (seed % 1 ether < jackpotChance && jackpot > 0) {
+            // gets a random participant
             jackpotWinner = drawManager.draw(seed);
             seed = getNewRandom(seed);
         }
         
+        // determines 3 winners
         for (uint256 i = 0; i < 3; i++) {
+             // gets a random participant
             winners[i] = drawManager.draw(seed);
+            // if the address is zero then there are no more participants
             if (winners[i] == address(0)) break;
+            // withdraws the winner's entire deposit so that they can't get the next prizes of this round
             winnersCurrentDeposits[i] = drawManager.withdraw(winners[i]);
             seed = getNewRandom(seed);
         }
+        // returns winners' deposits back with the prizes they won
         for (uint256 i = 0; i < 3; i++) {
+            // if the address is zero then there are no more winners
             if (winners[i] == address(0)) break;
             drawManager.deposit(winners[i], winnersCurrentDeposits[i].add(prizeValues[i]));
         }
@@ -251,6 +268,8 @@ contract PoaMania is Ownable, Random {
         if (feeReceiver != address(0)) {
             _send(address(uint160(feeReceiver)), feeValue);
         }
+
+        // the reward for the Round Closer
         drawManager.deposit(msg.sender, executorShareValue);
 
         emit Rewarded(
