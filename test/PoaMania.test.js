@@ -439,7 +439,7 @@ describe('PoaMania', () => {
       }
       await poaMania.nextRound({ from: firstParticipant });
     });
-    it('should reward if only 1', async () => {
+    it('should reward if only 1 participant', async () => {
       randomContract = await RandomMock.new(2);
       poaMania = await PoaMania.new();
       await initialize();
@@ -463,7 +463,12 @@ describe('PoaMania', () => {
       receipt.logs[0].args.prizes.forEach((prize, index) => {
         expect(prize).to.be.bignumber.equal(prizes[index]);
       });
-
+      const firstParticipantDepositBalance = await poaMania.balanceOf(firstParticipant);
+      const totalDeposit = await poaMania.totalDepositedBalance();
+      const contractBalance = await balance.current(poaMania.address);
+      expect(firstParticipantDepositBalance).to.be.bignumber.equal(ether('1').add(prizes[0]));
+      expect(totalDeposit).to.be.bignumber.equal(firstParticipantDepositBalance.add(executorReward));
+      expect(contractBalance).to.be.bignumber.equal(prizes[1].add(prizes[2]).add(jackpotShareValue).add(totalDeposit));
     });
   });
   describe('setRoundDuration', () => {
