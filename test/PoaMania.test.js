@@ -434,6 +434,32 @@ describe('PoaMania', () => {
       await time.advanceBlock();
       await poaMania.nextRound({ from: firstParticipant });
     });
+    it('should reward if only 1', async () => {
+      randomContract = await RandomMock.new(2);
+      poaMania = await PoaMania.new();
+      await initialize();
+      await poaMania.setMinDeposit(ether('1'), { from: owner });
+      await poaMania.deposit({ from: firstParticipant, value: ether('1') });
+      await send.ether(owner, poaMania.address, ether('10'));
+      const { prizes, feeValue, jackpotShareValue, executorReward }  = await getAllRewards();
+      await goToTheEndOfRound();
+      const receipt = await poaMania.nextRound({ from: secondParticipant });
+      expectEvent(receipt, 'Rewarded', {
+        roundId: new BN(1),
+        fee: feeValue,
+        feeReceiver: owner,
+        jackpotShare: jackpotShareValue,
+        executorReward,
+        executor: secondParticipant,
+      });
+      expect(receipt.logs[0].args.winners[0]).to.equal(firstParticipant);
+      expect(receipt.logs[0].args.winners[1]).to.equal(constants.ZERO_ADDRESS);
+      expect(receipt.logs[0].args.winners[2]).to.equal(constants.ZERO_ADDRESS);
+      receipt.logs[0].args.prizes.forEach((prize, index) => {
+        expect(prize).to.be.bignumber.equal(prizes[index]);
+      });
+
+    });
   });
   describe('setRoundDuration', () => {
     it('should set', async () => {
