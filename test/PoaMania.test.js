@@ -262,6 +262,14 @@ describe('PoaMania', () => {
         'should be less than or equal to max deposit'
       );
     });
+    it('fails if locked', async () => {
+      const lockStart = await poaMania.getLockStart();
+      await time.increaseTo(lockStart);
+      await expectRevert(
+        poaMania.deposit({ from: firstParticipant, value: ether('10') }),
+        'locked'
+      );
+    });
   });
   describe('withdraw', () => {
     beforeEach(async () => {
@@ -296,6 +304,18 @@ describe('PoaMania', () => {
       await expectRevert(
         poaMania.withdraw(ether('11'), { from: firstParticipant }),
         'SafeMath: subtraction overflow'
+      );
+    });
+    it('fails if locked', async () => {
+      const lockStart = await poaMania.getLockStart();
+      await time.increaseTo(lockStart);
+      await expectRevert(
+        poaMania.methods['withdraw()']({ from: firstParticipant }),
+        'locked'
+      );
+      await expectRevert(
+        poaMania.withdraw(minDeposit, { from: firstParticipant }),
+        'locked'
       );
     });
   });
