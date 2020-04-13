@@ -5,6 +5,7 @@ const { expect } = require('chai');
 const PoaMania = contract.fromArtifact('PoaMania');
 const RandomMock = contract.fromArtifact('RandomMock');
 const DrawManager = contract.fromArtifact('DrawManager');
+const Random = contract.fromArtifact('Random');
 const SortitionSumTreeFactory = contract.fromArtifact('SortitionSumTreeFactory');
 
 describe('PoaMania', () => {
@@ -50,8 +51,11 @@ describe('PoaMania', () => {
     await DrawManager.detectNetwork();
     await DrawManager.link('SortitionSumTreeFactory', sortitionSumTreeFactory.address);
     const drawManager = await DrawManager.new();
+    await Random.detectNetwork();
+    const random = await Random.new();
     await PoaMania.detectNetwork();
     await PoaMania.link('DrawManager', drawManager.address);
+    await PoaMania.link('Random', random.address);
   });
 
   beforeEach(async () => {
