@@ -293,7 +293,7 @@ contract PoaMania is Ownable, Random {
 
     /**
      * @dev Sets the round duration
-     * @param _roundDuration The round duration (in percentage)
+     * @param _roundDuration The round duration (in seconds)
      */
     function setRoundDuration(uint256 _roundDuration) external onlyOwner {
         _setRoundDuration(_roundDuration);
@@ -460,7 +460,7 @@ contract PoaMania is Ownable, Random {
     /**
      * @dev Sets the round duration
      * Reverts if the value is zero
-     * @param _roundDuration The round duration (in percentage)
+     * @param _roundDuration The round duration (in seconds)
      */
     function _setRoundDuration(uint256 _roundDuration) internal {
         require(_roundDuration > 0, "should be greater than 0");
