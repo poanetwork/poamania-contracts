@@ -263,7 +263,17 @@ describe('PoaMania', () => {
       );
     });
     it('fails if locked', async () => {
-      const lockStart = await poaMania.getLockStart();
+      const [lockStart, startedAt, roundDuration, blockTime, randomUpdateInterval] = await Promise.all([
+        poaMania.getLockStart(),
+        poaMania.startedAt(),
+        poaMania.roundDuration(),
+        poaMania.blockTime(),
+        randomContract.collectRoundLength(),
+      ]);
+      const expectedLockStart = startedAt.add(roundDuration).sub(randomUpdateInterval.mul(new BN(2)).mul(blockTime));
+      expect(lockStart).to.be.bignumber.equal(expectedLockStart);
+      await time.increaseTo(lockStart.sub(new BN(1)));
+      await poaMania.deposit({ from: firstParticipant, value: ether('10') });
       await time.increaseTo(lockStart);
       await expectRevert(
         poaMania.deposit({ from: firstParticipant, value: ether('10') }),
@@ -307,7 +317,10 @@ describe('PoaMania', () => {
       );
     });
     it('fails if locked', async () => {
+      await poaMania.deposit({ from: firstParticipant, value: ether('1') });
       const lockStart = await poaMania.getLockStart();
+      await time.increaseTo(lockStart.sub(new BN(1)));
+      await poaMania.withdraw(ether('1'), { from: firstParticipant });
       await time.increaseTo(lockStart);
       await expectRevert(
         poaMania.methods['withdraw()']({ from: firstParticipant }),
