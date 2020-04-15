@@ -67,3 +67,5 @@ The owner can only change the game parameters.
 8. `setBlockTime(uint256 _blockTime)`
 9. `setMinDeposit(uint256 _minDeposit)`
 10. `setMaxDeposit(uint256 _maxDeposit)`
+
+*Note: All methods are described in code.*
