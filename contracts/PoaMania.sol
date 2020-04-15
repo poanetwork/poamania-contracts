@@ -5,7 +5,14 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "./Random.sol";
 import "./DrawManager.sol";
 import "./Sacrifice.sol";
-
+/**
+ * @title PoaMania
+ * @dev This's the main contract of PoaMania.
+ * 
+ * Note: all percentage values are between 0 and 1
+ * and represented as fixed point numbers with 18 decimals like in Ether
+ * 100% == 1 ether
+ */
 contract PoaMania is Ownable, Random {
     using SafeMath for uint256;
     using DrawManager for DrawManager.State;
@@ -76,26 +83,26 @@ contract PoaMania is Ownable, Random {
     // The maximum allowable deposit
     uint256 public maxDeposit;
 
-    // The fee of the lottery (in percentage, 100% == 1 ether)
+    // The fee of the lottery (in percentage)
     uint256 public fee;
 
     // The address of the fee receiver
     address public feeReceiver;
 
-    // The reward for the round closer (in percentage, 100% == 1 ether)
+    // The reward for the round closer (in percentage)
     uint256 public executorShare;
 
-    // The part of the prize that goes to the Jackpot (in percentage, 100% == 1 ether)
+    // The part of the prize that goes to the Jackpot (in percentage)
     uint256 public jackpotShare;
 
-    // The Jackpot chance (in percentage, 100% == 1 ether)
+    // The Jackpot chance (in percentage)
     uint256 public jackpotChance;
 
     // The current Jackpot size
     uint256 public jackpot;
 
     /**
-     * The 1st and the 2nd prizes' sizes (in percentage, 100% == 1 ether)
+     * The 1st and the 2nd prizes' sizes (in percentage)
      * The 3rd one is calculated using 2 previous
      */
     uint256[2] prizeSizes;
