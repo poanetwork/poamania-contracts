@@ -68,4 +68,7 @@ The owner can only change the game parameters.
 9. `setMinDeposit(uint256 _minDeposit)`
 10. `setMaxDeposit(uint256 _maxDeposit)`
 
-*Note: All methods are described in code.*
+### Proxy Admin
+The Proxy Admin can upgrade the logic of the contracts. This role will be abolished after an audit and some testing time.
+
+*`Note: All methods are described in code.`*
