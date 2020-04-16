@@ -545,6 +545,48 @@ describe('PoaMania', () => {
         jackpot = jackpot.add(jackpotShareValue);
       }
     });
+    it('should confirm participants chances', async () => {
+      randomContract = await RandomMock.new(2);
+      poaMania = await PoaMania.new();
+      await initialize();
+      await poaMania.setMinDeposit(ether('0.2'), { from: owner });
+      let participants = [
+        { address: accounts[1], deposit: ether('1') },
+        { address: accounts[2], deposit: ether('1.5') },
+        { address: accounts[3], deposit: ether('2.5') },
+        { address: accounts[4], deposit: ether('4') },
+        { address: accounts[5], deposit: ether('5') },
+        { address: accounts[6], deposit: ether('0.2') },
+        { address: accounts[7], deposit: ether('12') },
+        { address: accounts[8], deposit: ether('7') },
+        { address: accounts[9], deposit: ether('10') },
+      ];
+      const totalDeposit = participants.reduce((acc, cur) => acc.add(cur.deposit), new BN(0));
+      participants = participants.map(item => ({
+        ...item,
+        wins: 0,
+        chance: item.deposit.mul(new BN(10000)).div(totalDeposit).toNumber() / 10000,
+      }));
+      await Promise.all(participants.map(item => poaMania.deposit({ from: item.address, value: item.deposit })));
+
+      const numberOfRounds = 500; 
+      for (let i = 0; i < numberOfRounds; i++) {
+        await goToTheEndOfRound();
+        await time.advanceBlock()
+        await time.advanceBlock()
+        const receipt = await poaMania.nextRound({ from: owner });
+        const index = participants.findIndex(item => item.address === receipt.logs[0].args.winners[0]);
+        participants[index].wins += 1;
+      }
+      participants = participants.map(item => ({
+        ...item,
+        winRate: Number((item.wins / numberOfRounds).toFixed(4)),
+      }));
+      const accuracy = 0.04; // +/- 4%
+      participants.forEach(item => {
+        expect(Math.abs(item.winRate - item.chance)).to.be.lte(accuracy);
+      });
+    });
   });
   describe('setRoundDuration', () => {
     it('should set', async () => {
