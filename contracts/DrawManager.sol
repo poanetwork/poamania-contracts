@@ -60,6 +60,8 @@ library DrawManager {
     }
 
     /**
+     * Returns the user from the tree by provided random number.
+     * More about winner selection you can find here: https://www.poa.network/for-users/poa-mania/winner-selection
      * @param _drawnNumber The random number
      * @return The random user from all
      */

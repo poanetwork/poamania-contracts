@@ -267,7 +267,17 @@ describe('PoaMania', () => {
       );
     });
     it('fails if locked', async () => {
-      const lockStart = await poaMania.getLockStart();
+      const [lockStart, startedAt, roundDuration, blockTime, randomUpdateInterval] = await Promise.all([
+        poaMania.getLockStart(),
+        poaMania.startedAt(),
+        poaMania.roundDuration(),
+        poaMania.blockTime(),
+        randomContract.collectRoundLength(),
+      ]);
+      const expectedLockStart = startedAt.add(roundDuration).sub(randomUpdateInterval.mul(new BN(2)).mul(blockTime));
+      expect(lockStart).to.be.bignumber.equal(expectedLockStart);
+      await time.increaseTo(lockStart.sub(new BN(1)));
+      await poaMania.deposit({ from: firstParticipant, value: ether('10') });
       await time.increaseTo(lockStart);
       await expectRevert(
         poaMania.deposit({ from: firstParticipant, value: ether('10') }),
@@ -311,7 +321,10 @@ describe('PoaMania', () => {
       );
     });
     it('fails if locked', async () => {
+      await poaMania.deposit({ from: firstParticipant, value: ether('1') });
       const lockStart = await poaMania.getLockStart();
+      await time.increaseTo(lockStart.sub(new BN(1)));
+      await poaMania.withdraw(ether('1'), { from: firstParticipant });
       await time.increaseTo(lockStart);
       await expectRevert(
         poaMania.methods['withdraw()']({ from: firstParticipant }),
@@ -473,6 +486,123 @@ describe('PoaMania', () => {
       expect(firstParticipantDepositBalance).to.be.bignumber.equal(ether('1').add(prizes[0]));
       expect(totalDeposit).to.be.bignumber.equal(firstParticipantDepositBalance.add(executorReward));
       expect(contractBalance).to.be.bignumber.equal(prizes[1].add(prizes[2]).add(jackpotShareValue).add(totalDeposit));
+    });
+    it('should complete 10 rounds', async () => {
+      const participants = [firstParticipant, secondParticipant, thirdParticipant];
+      const deposits = [ether('1'), ether('2'), ether('3')];
+      let jackpot = new BN(0);
+      await Promise.all(participants.map((participant, index) =>
+        poaMania.deposit({ from: participant, value: deposits[index] })
+      ));
+      for (let i = 0; i < 10; i++) {
+        await send.ether(owner, poaMania.address, ether(String((i + 1) / 2)));
+        const { prizes, feeValue, jackpotShareValue, executorReward }  = await getAllRewards();
+        await goToTheEndOfRound();
+        const balanceBefore = await balance.current(owner);
+        const receipt = await poaMania.nextRound({ from: fourthParticipant });
+        const balanceAfter = await balance.current(owner);
+        checkRewardedEvent(receipt, {
+          roundId: new BN(i + 1),
+          winners: participants,
+          prizes,
+          fee: feeValue,
+          feeReceiver: owner,
+          jackpotShare: jackpotShareValue,
+          executorReward,
+          executor: fourthParticipant,
+        });
+        await Promise.all(participants.map(async (participant, index) => {
+          const winnerIndex = receipt.logs[0].args.winners.indexOf(participant);
+          const expectedNewDeposit = deposits[index].add(receipt.logs[0].args.prizes[winnerIndex]);
+          expect(await poaMania.balanceOf(participant)).to.be.bignumber.equal(expectedNewDeposit);
+          deposits[index] = expectedNewDeposit;
+        }));
+        jackpot = jackpot.add(jackpotShareValue);
+        expect(await poaMania.balanceOf(fourthParticipant)).to.be.bignumber.equal(executorReward);
+        expect(await poaMania.jackpot()).to.be.bignumber.equal(jackpot);
+        expect(balanceAfter).to.be.bignumber.equal(balanceBefore.add(feeValue));
+        await poaMania.methods['withdraw()']({ from: fourthParticipant });
+      }
+    });
+    it('should draw the jackpot', async () => {
+      const participants = [firstParticipant, secondParticipant, thirdParticipant];
+      const deposits = [ether('1'), ether('2'), ether('3')];
+      let jackpot = new BN(0);
+      await Promise.all(participants.map((participant, index) =>
+        poaMania.deposit({ from: participant, value: deposits[index] })
+      ));
+      await poaMania.setJackpotChance(ether('0'), { from: owner });
+      for (let i = 0; i < 3; i++) {
+        await send.ether(owner, poaMania.address, ether('1'));
+        const { prizes, feeValue, jackpotShareValue, executorReward }  = await getAllRewards();
+        await goToTheEndOfRound();
+        const receipt = await poaMania.nextRound({ from: fourthParticipant });
+        await poaMania.methods['withdraw()']({ from: fourthParticipant });
+        checkRewardedEvent(receipt, {
+          roundId: new BN(i + 1),
+          winners: participants,
+          prizes,
+          fee: feeValue,
+          feeReceiver: owner,
+          jackpotShare: jackpotShareValue,
+          executorReward,
+          executor: fourthParticipant,
+        });
+        if (i == 1) {
+          await poaMania.setJackpotChance(ether('1'), { from: owner });
+        }
+        if (i == 2) {
+          expectEvent(receipt, 'Jackpot', {
+            roundId: new BN(i + 1),
+            prize: jackpot,
+          });
+          const foundWinner = participants.find(winner => winner === receipt.logs[1].args.winner);
+          expect(foundWinner).to.not.be.undefined;
+        }
+        jackpot = jackpot.add(jackpotShareValue);
+      }
+    });
+    it('should confirm participants chances', async () => {
+      randomContract = await RandomMock.new(2);
+      poaMania = await PoaMania.new();
+      await initialize();
+      await poaMania.setMinDeposit(ether('0.2'), { from: owner });
+      let participants = [
+        { address: accounts[1], deposit: ether('1') },
+        { address: accounts[2], deposit: ether('1.5') },
+        { address: accounts[3], deposit: ether('2.5') },
+        { address: accounts[4], deposit: ether('4') },
+        { address: accounts[5], deposit: ether('5') },
+        { address: accounts[6], deposit: ether('0.2') },
+        { address: accounts[7], deposit: ether('12') },
+        { address: accounts[8], deposit: ether('7') },
+        { address: accounts[9], deposit: ether('10') },
+      ];
+      const totalDeposit = participants.reduce((acc, cur) => acc.add(cur.deposit), new BN(0));
+      participants = participants.map(item => ({
+        ...item,
+        wins: 0,
+        chance: item.deposit.mul(new BN(10000)).div(totalDeposit).toNumber() / 10000,
+      }));
+      await Promise.all(participants.map(item => poaMania.deposit({ from: item.address, value: item.deposit })));
+
+      const numberOfRounds = 500; 
+      for (let i = 0; i < numberOfRounds; i++) {
+        await goToTheEndOfRound();
+        await time.advanceBlock()
+        await time.advanceBlock()
+        const receipt = await poaMania.nextRound({ from: owner });
+        const index = participants.findIndex(item => item.address === receipt.logs[0].args.winners[0]);
+        participants[index].wins += 1;
+      }
+      participants = participants.map(item => ({
+        ...item,
+        winRate: Number((item.wins / numberOfRounds).toFixed(4)),
+      }));
+      const accuracy = 0.04; // +/- 4%
+      participants.forEach(item => {
+        expect(Math.abs(item.winRate - item.chance)).to.be.lte(accuracy);
+      });
     });
   });
   describe('setRoundDuration', () => {
