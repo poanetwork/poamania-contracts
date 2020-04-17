@@ -5,6 +5,7 @@ import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
 import "./Random.sol";
 import "./DrawManager.sol";
 import "./Sacrifice.sol";
+
 /**
  * @title PoaMania
  * @dev This's the main contract of PoaMania.
@@ -13,9 +14,10 @@ import "./Sacrifice.sol";
  * and represented as fixed point numbers with 18 decimals like in Ether
  * 100% == 1 ether
  */
-contract PoaMania is Ownable, Random {
+contract PoaMania is Ownable {
     using SafeMath for uint256;
     using DrawManager for DrawManager.State;
+    using Random for Random.State;
 
     /**
      * @dev Emitted at the end of the round
@@ -64,6 +66,9 @@ contract PoaMania is Ownable, Random {
 
     // The structure that is used to store the deposits of all users and determine the winners
     DrawManager.State internal drawManager;
+
+    // The structure that is used for random
+    Random.State internal random;
 
     // The current round number
     uint256 public roundId;
@@ -162,7 +167,7 @@ contract PoaMania is Ownable, Random {
         _setMinDeposit(_minDeposit);
         _setMaxDeposit(_maxDeposit);
         jackpot = 0;
-        Random._init(_randomContract);
+        random.init(_randomContract);
         // creates a tree of nodes
         drawManager.create();
         // starts the first round
@@ -245,14 +250,14 @@ contract PoaMania is Ownable, Random {
         prizeValues[2] = winnersTotalPrize.sub(prizeValues[0]).sub(prizeValues[1]);
 
         // takes the random seed
-        uint256 seed = _useSeed();
+        uint256 seed = random.get();
 
         // checks if the jackpot must be drawn
         address jackpotWinner;
         if (seed % 1 ether < jackpotChance && jackpot > 0) {
             // gets a random participant
             jackpotWinner = drawManager.draw(seed);
-            seed = getNewRandom(seed);
+            seed = random.next(seed);
         }
         
         // determines 3 winners
@@ -263,7 +268,7 @@ contract PoaMania is Ownable, Random {
             if (winners[i] == address(0)) break;
             // withdraws the winner's entire deposit so that they can't get the next prizes of this round
             winnersCurrentDeposits[i] = drawManager.withdraw(winners[i]);
-            seed = getNewRandom(seed);
+            seed = random.next(seed);
         }
         // returns winners' deposits back with the prizes they won
         for (uint256 i = 0; i < 3; i++) {
@@ -413,6 +418,7 @@ contract PoaMania is Ownable, Random {
      * @return The timestamp when deposits and withdrawals will be locked
      */
     function getLockStart() public view returns (uint256) {
+        uint256 randomUpdateInterval = random.getUpdateInterval();
         return startedAt.add(roundDuration).sub(randomUpdateInterval.mul(2).mul(blockTime));
     }
 
