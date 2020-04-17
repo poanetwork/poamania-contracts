@@ -566,6 +566,7 @@ describe('PoaMania', () => {
       randomContract = await RandomMock.new(2);
       poaMania = await PoaMania.new();
       await initialize();
+      await randomContract.setCollectRoundLength(0);
       await poaMania.setMinDeposit(ether('0.2'), { from: owner });
       let participants = [
         { address: accounts[1], deposit: ether('1') },
@@ -588,9 +589,8 @@ describe('PoaMania', () => {
 
       const numberOfRounds = 500; 
       for (let i = 0; i < numberOfRounds; i++) {
-        await goToTheEndOfRound();
-        await time.advanceBlock()
-        await time.advanceBlock()
+        const startedAt = await poaMania.startedAt();
+        await time.increaseTo(startedAt.add(roundDuration).add(new BN(1)));
         const receipt = await poaMania.nextRound({ from: owner });
         const index = participants.findIndex(item => item.address === receipt.logs[0].args.winners[0]);
         participants[index].wins += 1;
@@ -599,7 +599,7 @@ describe('PoaMania', () => {
         ...item,
         winRate: Number((item.wins / numberOfRounds).toFixed(4)),
       }));
-      const accuracy = 0.04; // +/- 4%
+      const accuracy = 0.05; // +/- 5%
       participants.forEach(item => {
         expect(Math.abs(item.winRate - item.chance)).to.be.lte(accuracy);
       });

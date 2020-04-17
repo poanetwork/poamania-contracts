@@ -6,7 +6,7 @@ contract RandomMock is IPOSDAORandom {
     uint256 private _collectRoundLength;
 
     constructor(uint256 _roundLength) public {
-        _collectRoundLength = _roundLength;
+        setCollectRoundLength(_roundLength);
     }
 
     function collectRoundLength() external view returns(uint256) {
@@ -18,6 +18,13 @@ contract RandomMock is IPOSDAORandom {
     }
 
     function isCommitPhase() external view returns(bool) {
+        if (_collectRoundLength == 0) {
+            return true;
+        }
         return (block.number % _collectRoundLength) < (_collectRoundLength / 2);
+    }
+
+    function setCollectRoundLength(uint256 _roundLength) public {
+        _collectRoundLength = _roundLength;
     }
 }
