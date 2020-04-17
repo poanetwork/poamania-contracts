@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --timeout 300000 --exit --recursive test"
+    "test": "npx oz compile && mocha --timeout 300000 --exit --recursive test"
   },
   "repository": {
     "type": "git",
