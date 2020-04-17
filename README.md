@@ -38,7 +38,7 @@ $ npm test
 ### Deployment
 To run deployment in interactive mode:
 ```
-$ oz deploy
+$ npx oz deploy
 ```
 More about `oz` commands [here](https://docs.openzeppelin.com/cli).
 
