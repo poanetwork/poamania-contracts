@@ -28,6 +28,7 @@ to see how cool it is.
 Clone the repo and then install dependencies:
 ```
 $ npm i
+$ npm i -g npx
 ```
 ### Testing
 To run the entire test suite:
