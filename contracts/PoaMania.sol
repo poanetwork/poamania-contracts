@@ -413,7 +413,7 @@ contract PoaMania is Ownable, Random {
      * @return The timestamp when deposits and withdrawals will be locked
      */
     function getLockStart() public view returns (uint256) {
-        return startedAt.add(roundDuration).sub(randomUpdateInterval.mul(blockTime));
+        return startedAt.add(roundDuration).sub(randomUpdateInterval.mul(2).mul(blockTime));
     }
 
     /**
