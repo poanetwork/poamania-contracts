@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "npx oz compile && mocha --timeout 300000 --exit --recursive test"
+    "test": "bash scripts/test.sh",
+    "coverage": "SOLIDITY_COVERAGE=true bash scripts/test.sh"
   },
   "repository": {
     "type": "git",
@@ -28,6 +29,9 @@
     "@openzeppelin/test-environment": "^0.1.3",
     "@openzeppelin/test-helpers": "^0.5.5",
     "chai": "^4.2.0",
-    "mocha": "^7.1.1"
+    "ganache-cli": "^6.9.1",
+    "mocha": "^7.1.1",
+    "solidity-coverage": "^0.7.4",
+    "truffle": "^5.1.23"
   }
 }

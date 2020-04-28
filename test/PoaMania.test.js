@@ -1,14 +1,13 @@
-const { accounts, contract } = require('@openzeppelin/test-environment');
 const { ether, BN, expectRevert, expectEvent, time, constants, send, balance } = require('@openzeppelin/test-helpers');
 const { expect } = require('chai');
 
-const PoaMania = contract.fromArtifact('PoaMania');
-const RandomMock = contract.fromArtifact('RandomMock');
-const DrawManager = contract.fromArtifact('DrawManager');
-const Random = contract.fromArtifact('Random');
-const SortitionSumTreeFactory = contract.fromArtifact('SortitionSumTreeFactory');
+const PoaMania = artifacts.require('PoaMania');
+const RandomMock = artifacts.require('RandomMock');
+const DrawManager = artifacts.require('DrawManager');
+const Random = artifacts.require('Random');
+const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory');
 
-describe('PoaMania', () => {
+contract('PoaMania', accounts => {
   const [owner, firstParticipant, secondParticipant, thirdParticipant, fourthParticipant, fifthParticipant] = accounts;
   const roundDuration = new BN(600);                       // in seconds
   const blockTime = new BN(5);                             // in seconds
