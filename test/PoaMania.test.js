@@ -6,6 +6,7 @@ const RandomMock = artifacts.require('RandomMock');
 const DrawManager = artifacts.require('DrawManager');
 const Random = artifacts.require('Random');
 const SortitionSumTreeFactory = artifacts.require('SortitionSumTreeFactory');
+const ReceiverMock = artifacts.require('ReceiverMock');
 
 contract('PoaMania', accounts => {
   const [owner, firstParticipant, secondParticipant, thirdParticipant, fourthParticipant, fifthParticipant] = accounts;
@@ -333,6 +334,16 @@ contract('PoaMania', accounts => {
         poaMania.withdraw(minDeposit, { from: firstParticipant }),
         'locked'
       );
+    });
+    it('should withdraw if simple send fails', async () => {
+      const value = ether('10');
+      await ReceiverMock.detectNetwork();
+      const receiver = await ReceiverMock.new(poaMania.address, { value });
+      expect(await balance.current(receiver.address)).to.be.bignumber.equal(value);
+      await receiver.deposit(value);
+      expect(await balance.current(receiver.address)).to.be.bignumber.equal(new BN(0));
+      await receiver.withdraw(value);
+      expect(await balance.current(receiver.address)).to.be.bignumber.equal(value);
     });
   });
   describe('nextRound', () => {
