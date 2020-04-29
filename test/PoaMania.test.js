@@ -276,7 +276,6 @@ contract('PoaMania', accounts => {
       ]);
       const expectedLockStart = startedAt.add(roundDuration).sub(randomUpdateInterval.mul(new BN(2)).mul(blockTime));
       expect(lockStart).to.be.bignumber.equal(expectedLockStart);
-      await time.increaseTo(lockStart.sub(new BN(1)));
       await poaMania.deposit({ from: firstParticipant, value: ether('10') });
       await time.increaseTo(lockStart);
       await expectRevert(
@@ -322,9 +321,8 @@ contract('PoaMania', accounts => {
     });
     it('fails if locked', async () => {
       await poaMania.deposit({ from: firstParticipant, value: ether('1') });
-      const lockStart = await poaMania.getLockStart();
-      await time.increaseTo(lockStart.sub(new BN(1)));
       await poaMania.withdraw(ether('1'), { from: firstParticipant });
+      const lockStart = await poaMania.getLockStart();
       await time.increaseTo(lockStart);
       await expectRevert(
         poaMania.methods['withdraw()']({ from: firstParticipant }),
@@ -501,6 +499,7 @@ contract('PoaMania', accounts => {
       const participants = [firstParticipant, secondParticipant, thirdParticipant];
       const deposits = [ether('1'), ether('2'), ether('3')];
       let jackpot = new BN(0);
+      await poaMania.setJackpotChance(ether('0.2'), { from: owner }); // 20%
       await Promise.all(participants.map((participant, index) =>
         poaMania.deposit({ from: participant, value: deposits[index] })
       ));
@@ -523,10 +522,16 @@ contract('PoaMania', accounts => {
         });
         await Promise.all(participants.map(async (participant, index) => {
           const winnerIndex = receipt.logs[0].args.winners.indexOf(participant);
-          const expectedNewDeposit = deposits[index].add(receipt.logs[0].args.prizes[winnerIndex]);
+          let expectedNewDeposit = deposits[index].add(receipt.logs[0].args.prizes[winnerIndex]);
+          if (receipt.logs[1] && receipt.logs[1].args.winner === participant) {
+            expectedNewDeposit = expectedNewDeposit.add(receipt.logs[1].args.prize);
+          }
           expect(await poaMania.balanceOf(participant)).to.be.bignumber.equal(expectedNewDeposit);
           deposits[index] = expectedNewDeposit;
         }));
+        if (receipt.logs[1]) {
+          jackpot = new BN(0);
+        }
         jackpot = jackpot.add(jackpotShareValue);
         expect(await poaMania.balanceOf(fourthParticipant)).to.be.bignumber.equal(executorReward);
         expect(await poaMania.jackpot()).to.be.bignumber.equal(jackpot);
