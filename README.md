@@ -57,7 +57,7 @@ and the next round will be started. More details you can find in [POA Mania Docs
 4. `nextRound()`
 
 ### Owner
-The owner can only change the game parameters. This role will be abolished after an audit and some testing time.
+The owner can only change the game parameters.
 1. `setRoundDuration(uint256 _roundDuration)`
 2. `setFee(uint256 _fee)`
 3. `setFeeReceiver(address _feeReceiver)`
