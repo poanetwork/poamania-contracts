@@ -531,7 +531,12 @@ contract PoaMania is Ownable {
      */
     function _setPrizeSizes(uint256[2] memory _prizeSizes) internal {
         uint256 sum = _prizeSizes[0].add(_prizeSizes[1]);
-        require(sum > 0 && sum <= 1 ether, "should be less than or equal to 1 ether");
+        require(sum > 0 && sum < 1 ether, "should be greater than 0 and less than 1 ether");
+        uint256 thirdPrize = uint256(1 ether).sub(sum);
+        require(
+            _prizeSizes[0] >= _prizeSizes[1] && _prizeSizes[1] >= thirdPrize,
+            "should satisfy: 1st prize >= 2nd prize >= 3rd prize"
+        );
         prizeSizes = _prizeSizes;
     }
 

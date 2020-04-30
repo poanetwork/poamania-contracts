@@ -178,6 +178,23 @@ contract('PoaMania', accounts => {
           blockTime.toString(),
           minDeposit.toString(),
           maxDeposit.toString(),
+          [0, 0],
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'should be greater than 0 and less than 1 ether'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          randomContract.address,
+          roundDuration.toString(),
+          blockTime.toString(),
+          minDeposit.toString(),
+          maxDeposit.toString(),
           [ether('0.5'), ether('0.6')].map(item => item.toString()),
           fee.toString(),
           feeReceiver,
@@ -185,7 +202,41 @@ contract('PoaMania', accounts => {
           jackpotShare.toString(),
           jackpotChance.toString(),
         ),
-        'should be less than or equal to 1 ether'
+        'should be greater than 0 and less than 1 ether'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          randomContract.address,
+          roundDuration.toString(),
+          blockTime.toString(),
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          [ether('0.4'), ether('0.5')].map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'should satisfy: 1st prize >= 2nd prize >= 3rd prize'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          randomContract.address,
+          roundDuration.toString(),
+          blockTime.toString(),
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          [ether('0.3'), ether('0.2')].map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'should satisfy: 1st prize >= 2nd prize >= 3rd prize'
       );
       await expectRevert(
         initialize(
@@ -768,8 +819,21 @@ contract('PoaMania', accounts => {
     it('fails if wrong value', async () => {
       await expectRevert(
         poaMania.setPrizeSizes([ether('0.8'), ether('0.25')], { from: owner }),
-        'should be less than or equal to 1 ether'
+        'should be greater than 0 and less than 1 ether'
       );
+      await expectRevert(
+        poaMania.setPrizeSizes([0, 0], { from: owner }),
+        'should be greater than 0 and less than 1 ether'
+      );
+      await expectRevert(
+        poaMania.setPrizeSizes([ether('0.4'), ether('0.5')], { from: owner }),
+        'should satisfy: 1st prize >= 2nd prize >= 3rd prize'
+      );
+      await expectRevert(
+        poaMania.setPrizeSizes([ether('0.3'), ether('0.3')], { from: owner }),
+        'should satisfy: 1st prize >= 2nd prize >= 3rd prize'
+      );
+      await poaMania.setPrizeSizes([ether('0.4'), ether('0.3')], { from: owner });
     });
   });
   describe('setBlockTime', () => {
