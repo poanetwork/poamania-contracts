@@ -151,7 +151,7 @@ contract('PoaMania', accounts => {
           jackpotShare.toString(),
           jackpotChance.toString(),
         ),
-        'should be greater than 0'
+        'should be greater than 4 random phases and 40 blocks'
       );
       await expectRevert(
         initialize(
@@ -703,7 +703,26 @@ contract('PoaMania', accounts => {
     it('fails if wrong value', async () => {
       await expectRevert(
         poaMania.setRoundDuration(0, { from: owner }),
-        'should be greater than 0'
+        'should be greater than 4 random phases and 40 blocks'
+      );
+      randomContract = await RandomMock.new(2);
+      poaMania = await PoaMania.new();
+      await initialize();
+      await expectRevert(
+        poaMania.setRoundDuration(40, { from: owner }),
+        'should be greater than 4 random phases and 40 blocks'
+      );
+      await expectRevert(
+        poaMania.setRoundDuration(200, { from: owner }),
+        'should be greater than 4 random phases and 40 blocks'
+      );
+      await poaMania.setRoundDuration(201, { from: owner });
+      randomContract = await RandomMock.new(41);
+      poaMania = await PoaMania.new();
+      await initialize();
+      await expectRevert(
+        poaMania.setRoundDuration(201, { from: owner }),
+        'should be greater than 4 random phases and 40 blocks'
       );
     });
   });

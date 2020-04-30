@@ -476,7 +476,11 @@ contract PoaMania is Ownable {
      * @param _roundDuration The round duration (in seconds)
      */
     function _setRoundDuration(uint256 _roundDuration) internal {
-        require(_roundDuration > 0, "should be greater than 0");
+        uint256 randomUpdateInterval = random.getUpdateInterval();
+        require(
+            _roundDuration > randomUpdateInterval.mul(4).mul(blockTime) && _roundDuration > blockTime.mul(40),
+            "should be greater than 4 random phases and 40 blocks"
+        );
         roundDuration = _roundDuration;
     }
 
