@@ -155,6 +155,8 @@ contract PoaMania is Ownable {
         require(_owner != address(0), "zero address");
         // initializes all params
         Ownable.initialize(_owner);
+        random.init(_randomContract);
+        _setBlockTime(_blockTime);
         _setRoundDuration(_roundDuration);
         _setFee(_fee);
         _setFeeReceiver(_feeReceiver);
@@ -163,11 +165,9 @@ contract PoaMania is Ownable {
         _setExecutorShare(_executorShare);
         _validateSumOfShares();
         _setPrizeSizes(_prizeSizes);
-        _setBlockTime(_blockTime);
         _setMaxDeposit(_maxDeposit);
         _setMinDeposit(_minDeposit);
         jackpot = 0;
-        random.init(_randomContract);
         // creates a tree of nodes
         drawManager.create();
         // starts the first round
@@ -418,8 +418,16 @@ contract PoaMania is Ownable {
      * @return The timestamp when deposits and withdrawals will be locked
      */
     function getLockStart() public view returns (uint256) {
+        uint256 lockDuration = getLockDuration();
+        return startedAt.add(roundDuration).sub(lockDuration);
+    }
+
+    /**
+     * @dev Returns lock duration
+     */
+    function getLockDuration() public view returns (uint256) {
         uint256 randomUpdateInterval = random.getUpdateInterval();
-        return startedAt.add(roundDuration).sub(randomUpdateInterval.mul(2).mul(blockTime));
+        return randomUpdateInterval.mul(2).mul(blockTime);
     }
 
     /**
@@ -472,15 +480,12 @@ contract PoaMania is Ownable {
 
     /**
      * @dev Sets the round duration
-     * Reverts if the value is zero
+     * Reverts if the value is less than 2 lock durations
      * @param _roundDuration The round duration (in seconds)
      */
     function _setRoundDuration(uint256 _roundDuration) internal {
-        uint256 randomUpdateInterval = random.getUpdateInterval();
-        require(
-            _roundDuration > randomUpdateInterval.mul(4).mul(blockTime) && _roundDuration > blockTime.mul(40),
-            "should be greater than 4 random phases and 40 blocks"
-        );
+        uint256 lockDuration = getLockDuration();
+        require(_roundDuration >= lockDuration.mul(2), "should be greater than or equal to 2 lock durations");
         roundDuration = _roundDuration;
     }
 

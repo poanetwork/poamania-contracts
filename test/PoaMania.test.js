@@ -10,7 +10,7 @@ const ReceiverMock = artifacts.require('ReceiverMock');
 
 contract('PoaMania', accounts => {
   const [owner, firstParticipant, secondParticipant, thirdParticipant, fourthParticipant, fifthParticipant] = accounts;
-  const roundDuration = new BN(600);                       // in seconds
+  const roundDuration = new BN(800);                       // in seconds
   const blockTime = new BN(5);                             // in seconds
   const minDeposit = ether('10');                  // 10 POA
   const maxDeposit = ether('500000');              // 500,000 POA
@@ -151,7 +151,7 @@ contract('PoaMania', accounts => {
           jackpotShare.toString(),
           jackpotChance.toString(),
         ),
-        'should be greater than 4 random phases and 40 blocks'
+        'should be greater than or equal to 2 lock durations'
       );
       await expectRevert(
         initialize(
@@ -365,7 +365,7 @@ contract('PoaMania', accounts => {
     });
     it('should withdraw specified amount', async () => {
       await poaMania.deposit({ from: firstParticipant, value: ether('5') });
-      const receipt = await poaMania.withdraw(ether('5'), { from: firstParticipant });
+      const receipt = await poaMania.methods['withdraw(uint256)'](ether('5'), { from: firstParticipant });
       expect(await poaMania.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
       expect(await poaMania.totalDepositedBalance()).to.be.bignumber.equal(minDeposit);
       expect(await poaMania.balanceOf(firstParticipant)).to.be.bignumber.equal(minDeposit);
@@ -373,23 +373,23 @@ contract('PoaMania', accounts => {
     });
     it('fails if zero value', async () => {
       await expectRevert(poaMania.methods['withdraw()']({ from: secondParticipant }), 'zero value');
-      await expectRevert(poaMania.withdraw(0, { from: firstParticipant }), 'zero value');
+      await expectRevert(poaMania.methods['withdraw(uint256)'](0, { from: firstParticipant }), 'zero value');
     });
     it('fails if less than min deposit', async () => {
       await expectRevert(
-        poaMania.withdraw(ether('5'), { from: firstParticipant }),
+        poaMania.methods['withdraw(uint256)'](ether('5'), { from: firstParticipant }),
         'should be greater than or equal to min deposit'
       );
     });
     it('fails if greater than user deposit', async () => {
       await expectRevert(
-        poaMania.withdraw(ether('11'), { from: firstParticipant }),
+        poaMania.methods['withdraw(uint256)'](ether('11'), { from: firstParticipant }),
         'SafeMath: subtraction overflow'
       );
     });
     it('fails if locked', async () => {
       await poaMania.deposit({ from: firstParticipant, value: ether('1') });
-      await poaMania.withdraw(ether('1'), { from: firstParticipant });
+      await poaMania.methods['withdraw(uint256)'](ether('1'), { from: firstParticipant });
       const lockStart = await poaMania.getLockStart();
       await time.increaseTo(lockStart);
       await expectRevert(
@@ -397,7 +397,7 @@ contract('PoaMania', accounts => {
         'locked'
       );
       await expectRevert(
-        poaMania.withdraw(minDeposit, { from: firstParticipant }),
+        poaMania.methods['withdraw(uint256)'](minDeposit, { from: firstParticipant }),
         'locked'
       );
     });
@@ -703,27 +703,13 @@ contract('PoaMania', accounts => {
     it('fails if wrong value', async () => {
       await expectRevert(
         poaMania.setRoundDuration(0, { from: owner }),
-        'should be greater than 4 random phases and 40 blocks'
-      );
-      randomContract = await RandomMock.new(2);
-      poaMania = await PoaMania.new();
-      await initialize();
-      await expectRevert(
-        poaMania.setRoundDuration(40, { from: owner }),
-        'should be greater than 4 random phases and 40 blocks'
+        'should be greater than or equal to 2 lock durations'
       );
       await expectRevert(
-        poaMania.setRoundDuration(200, { from: owner }),
-        'should be greater than 4 random phases and 40 blocks'
+        poaMania.setRoundDuration(799, { from: owner }),
+        'should be greater than or equal to 2 lock durations'
       );
-      await poaMania.setRoundDuration(201, { from: owner });
-      randomContract = await RandomMock.new(41);
-      poaMania = await PoaMania.new();
-      await initialize();
-      await expectRevert(
-        poaMania.setRoundDuration(201, { from: owner }),
-        'should be greater than 4 random phases and 40 blocks'
-      );
+      await poaMania.setRoundDuration(800, { from: owner });
     });
   });
   describe('setFee', () => {
