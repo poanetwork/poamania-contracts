@@ -164,8 +164,8 @@ contract PoaMania is Ownable {
         _validateSumOfShares();
         _setPrizeSizes(_prizeSizes);
         _setBlockTime(_blockTime);
-        _setMinDeposit(_minDeposit);
         _setMaxDeposit(_maxDeposit);
+        _setMinDeposit(_minDeposit);
         jackpot = 0;
         random.init(_randomContract);
         // creates a tree of nodes
@@ -550,6 +550,7 @@ contract PoaMania is Ownable {
      * @param _minDeposit The minimum deposit
      */
     function _setMinDeposit(uint256 _minDeposit) internal {
+        require(_minDeposit <= maxDeposit, "should be less than or equal to max deposit");
         minDeposit = _minDeposit;
     }
 
@@ -558,6 +559,7 @@ contract PoaMania is Ownable {
      * @param _maxDeposit The maximum deposit
      */
     function _setMaxDeposit(uint256 _maxDeposit) internal {
+        require(_maxDeposit >= minDeposit, "should be greater than or equal to min deposit");
         maxDeposit = _maxDeposit;
     }
 

@@ -238,6 +238,23 @@ contract('PoaMania', accounts => {
         ),
         'should be less than or equal to 1 ether'
       );
+      await expectRevert(
+        initialize(
+          owner,
+          randomContract.address,
+          roundDuration.toString(),
+          blockTime.toString(),
+          ether('10').toString(),
+          ether('9').toString(),
+          prizeSizes.map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'should be less than or equal to max deposit'
+      );
     });
   });
   describe('deposit', () => {
@@ -786,6 +803,14 @@ contract('PoaMania', accounts => {
         'Ownable: caller is not the owner'
       );
     });
+    it('fails if greater than max deposit', async () => {
+      await poaMania.setMaxDeposit(ether('100'));
+      await expectRevert(
+        poaMania.setMinDeposit(ether('101')),
+        'should be less than or equal to max deposit'
+      );
+      await poaMania.setMinDeposit(ether('100'));
+    });
   });
   describe('setMaxDeposit', () => {
     it('should set', async () => {
@@ -798,6 +823,14 @@ contract('PoaMania', accounts => {
         poaMania.setMaxDeposit(ether('1000'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
+    });
+    it('fails if less than min deposit', async () => {
+      await poaMania.setMinDeposit(ether('100'));
+      await expectRevert(
+        poaMania.setMaxDeposit(ether('99')),
+        'should be greater than or equal to min deposit'
+      );
+      await poaMania.setMaxDeposit(ether('100'));
     });
   });
 });
