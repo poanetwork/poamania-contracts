@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity 0.5.16;
 
 import "@openzeppelin/contracts-ethereum-package/contracts/ownership/Ownable.sol";
 import "@openzeppelin/contracts-ethereum-package/contracts/math/SafeMath.sol";
@@ -155,6 +155,8 @@ contract PoaMania is Ownable {
         require(_owner != address(0), "zero address");
         // initializes all params
         Ownable.initialize(_owner);
+        random.init(_randomContract);
+        _setBlockTime(_blockTime);
         _setRoundDuration(_roundDuration);
         _setFee(_fee);
         _setFeeReceiver(_feeReceiver);
@@ -163,11 +165,9 @@ contract PoaMania is Ownable {
         _setExecutorShare(_executorShare);
         _validateSumOfShares();
         _setPrizeSizes(_prizeSizes);
-        _setBlockTime(_blockTime);
-        _setMinDeposit(_minDeposit);
         _setMaxDeposit(_maxDeposit);
+        _setMinDeposit(_minDeposit);
         jackpot = 0;
-        random.init(_randomContract);
         // creates a tree of nodes
         drawManager.create();
         // starts the first round
@@ -418,8 +418,16 @@ contract PoaMania is Ownable {
      * @return The timestamp when deposits and withdrawals will be locked
      */
     function getLockStart() public view returns (uint256) {
+        uint256 lockDuration = getLockDuration();
+        return startedAt.add(roundDuration).sub(lockDuration);
+    }
+
+    /**
+     * @dev Returns lock duration
+     */
+    function getLockDuration() public view returns (uint256) {
         uint256 randomUpdateInterval = random.getUpdateInterval();
-        return startedAt.add(roundDuration).sub(randomUpdateInterval.mul(2).mul(blockTime));
+        return randomUpdateInterval.mul(2).mul(blockTime);
     }
 
     /**
@@ -472,11 +480,12 @@ contract PoaMania is Ownable {
 
     /**
      * @dev Sets the round duration
-     * Reverts if the value is zero
+     * Reverts if the value is less than 2 lock durations
      * @param _roundDuration The round duration (in seconds)
      */
     function _setRoundDuration(uint256 _roundDuration) internal {
-        require(_roundDuration > 0, "should be greater than 0");
+        uint256 lockDuration = getLockDuration();
+        require(_roundDuration >= lockDuration.mul(2), "should be greater than or equal to 2 lock durations");
         roundDuration = _roundDuration;
     }
 
@@ -531,7 +540,12 @@ contract PoaMania is Ownable {
      */
     function _setPrizeSizes(uint256[2] memory _prizeSizes) internal {
         uint256 sum = _prizeSizes[0].add(_prizeSizes[1]);
-        require(sum > 0 && sum <= 1 ether, "should be less than or equal to 1 ether");
+        require(sum > 0 && sum < 1 ether, "should be greater than 0 and less than 1 ether");
+        uint256 thirdPrize = uint256(1 ether).sub(sum);
+        require(
+            _prizeSizes[0] >= _prizeSizes[1] && _prizeSizes[1] >= thirdPrize,
+            "should satisfy: 1st prize >= 2nd prize >= 3rd prize"
+        );
         prizeSizes = _prizeSizes;
     }
 
@@ -550,6 +564,7 @@ contract PoaMania is Ownable {
      * @param _minDeposit The minimum deposit
      */
     function _setMinDeposit(uint256 _minDeposit) internal {
+        require(_minDeposit <= maxDeposit, "should be less than or equal to max deposit");
         minDeposit = _minDeposit;
     }
 
@@ -558,6 +573,7 @@ contract PoaMania is Ownable {
      * @param _maxDeposit The maximum deposit
      */
     function _setMaxDeposit(uint256 _maxDeposit) internal {
+        require(_maxDeposit >= minDeposit, "should be greater than or equal to min deposit");
         maxDeposit = _maxDeposit;
     }
 

@@ -73,3 +73,6 @@ The owner can only change the game parameters.
 The Proxy Admin can upgrade the logic of the contracts. This role will be abolished after an audit and some testing time.
 
 *`Note: All methods are described in code.`*
+
+## Dependencies
+The project uses the modified library `SortitionSumTreeFactory` with added `total()` and `numberOfNodes()` functions. You can find the modified implementation here: [@poanetwork/kleros](https://github.com/poanetwork/kleros). These changes were not audited but they add minimal risk.

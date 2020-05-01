@@ -1,4 +1,4 @@
-pragma solidity ^0.5.16;
+pragma solidity 0.5.16;
 
 interface IPOSDAORandom {
     function collectRoundLength() external view returns(uint256);

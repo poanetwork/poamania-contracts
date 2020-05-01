@@ -10,7 +10,7 @@ const ReceiverMock = artifacts.require('ReceiverMock');
 
 contract('PoaMania', accounts => {
   const [owner, firstParticipant, secondParticipant, thirdParticipant, fourthParticipant, fifthParticipant] = accounts;
-  const roundDuration = new BN(600);                       // in seconds
+  const roundDuration = new BN(800);                       // in seconds
   const blockTime = new BN(5);                             // in seconds
   const minDeposit = ether('10');                  // 10 POA
   const maxDeposit = ether('500000');              // 500,000 POA
@@ -151,7 +151,7 @@ contract('PoaMania', accounts => {
           jackpotShare.toString(),
           jackpotChance.toString(),
         ),
-        'should be greater than 0'
+        'should be greater than or equal to 2 lock durations'
       );
       await expectRevert(
         initialize(
@@ -178,6 +178,23 @@ contract('PoaMania', accounts => {
           blockTime.toString(),
           minDeposit.toString(),
           maxDeposit.toString(),
+          [0, 0],
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'should be greater than 0 and less than 1 ether'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          randomContract.address,
+          roundDuration.toString(),
+          blockTime.toString(),
+          minDeposit.toString(),
+          maxDeposit.toString(),
           [ether('0.5'), ether('0.6')].map(item => item.toString()),
           fee.toString(),
           feeReceiver,
@@ -185,7 +202,41 @@ contract('PoaMania', accounts => {
           jackpotShare.toString(),
           jackpotChance.toString(),
         ),
-        'should be less than or equal to 1 ether'
+        'should be greater than 0 and less than 1 ether'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          randomContract.address,
+          roundDuration.toString(),
+          blockTime.toString(),
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          [ether('0.4'), ether('0.5')].map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'should satisfy: 1st prize >= 2nd prize >= 3rd prize'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          randomContract.address,
+          roundDuration.toString(),
+          blockTime.toString(),
+          minDeposit.toString(),
+          maxDeposit.toString(),
+          [ether('0.3'), ether('0.2')].map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'should satisfy: 1st prize >= 2nd prize >= 3rd prize'
       );
       await expectRevert(
         initialize(
@@ -237,6 +288,23 @@ contract('PoaMania', accounts => {
           ether('1.1').toString(),
         ),
         'should be less than or equal to 1 ether'
+      );
+      await expectRevert(
+        initialize(
+          owner,
+          randomContract.address,
+          roundDuration.toString(),
+          blockTime.toString(),
+          ether('10').toString(),
+          ether('9').toString(),
+          prizeSizes.map(item => item.toString()),
+          fee.toString(),
+          feeReceiver,
+          roundCloserShare.toString(),
+          jackpotShare.toString(),
+          jackpotChance.toString(),
+        ),
+        'should be less than or equal to max deposit'
       );
     });
   });
@@ -297,7 +365,7 @@ contract('PoaMania', accounts => {
     });
     it('should withdraw specified amount', async () => {
       await poaMania.deposit({ from: firstParticipant, value: ether('5') });
-      const receipt = await poaMania.withdraw(ether('5'), { from: firstParticipant });
+      const receipt = await poaMania.methods['withdraw(uint256)'](ether('5'), { from: firstParticipant });
       expect(await poaMania.numberOfParticipants()).to.be.bignumber.equal(new BN(1));
       expect(await poaMania.totalDepositedBalance()).to.be.bignumber.equal(minDeposit);
       expect(await poaMania.balanceOf(firstParticipant)).to.be.bignumber.equal(minDeposit);
@@ -305,23 +373,23 @@ contract('PoaMania', accounts => {
     });
     it('fails if zero value', async () => {
       await expectRevert(poaMania.methods['withdraw()']({ from: secondParticipant }), 'zero value');
-      await expectRevert(poaMania.withdraw(0, { from: firstParticipant }), 'zero value');
+      await expectRevert(poaMania.methods['withdraw(uint256)'](0, { from: firstParticipant }), 'zero value');
     });
     it('fails if less than min deposit', async () => {
       await expectRevert(
-        poaMania.withdraw(ether('5'), { from: firstParticipant }),
+        poaMania.methods['withdraw(uint256)'](ether('5'), { from: firstParticipant }),
         'should be greater than or equal to min deposit'
       );
     });
     it('fails if greater than user deposit', async () => {
       await expectRevert(
-        poaMania.withdraw(ether('11'), { from: firstParticipant }),
+        poaMania.methods['withdraw(uint256)'](ether('11'), { from: firstParticipant }),
         'SafeMath: subtraction overflow'
       );
     });
     it('fails if locked', async () => {
       await poaMania.deposit({ from: firstParticipant, value: ether('1') });
-      await poaMania.withdraw(ether('1'), { from: firstParticipant });
+      await poaMania.methods['withdraw(uint256)'](ether('1'), { from: firstParticipant });
       const lockStart = await poaMania.getLockStart();
       await time.increaseTo(lockStart);
       await expectRevert(
@@ -329,7 +397,7 @@ contract('PoaMania', accounts => {
         'locked'
       );
       await expectRevert(
-        poaMania.withdraw(minDeposit, { from: firstParticipant }),
+        poaMania.methods['withdraw(uint256)'](minDeposit, { from: firstParticipant }),
         'locked'
       );
     });
@@ -635,8 +703,13 @@ contract('PoaMania', accounts => {
     it('fails if wrong value', async () => {
       await expectRevert(
         poaMania.setRoundDuration(0, { from: owner }),
-        'should be greater than 0'
+        'should be greater than or equal to 2 lock durations'
       );
+      await expectRevert(
+        poaMania.setRoundDuration(799, { from: owner }),
+        'should be greater than or equal to 2 lock durations'
+      );
+      await poaMania.setRoundDuration(800, { from: owner });
     });
   });
   describe('setFee', () => {
@@ -751,8 +824,21 @@ contract('PoaMania', accounts => {
     it('fails if wrong value', async () => {
       await expectRevert(
         poaMania.setPrizeSizes([ether('0.8'), ether('0.25')], { from: owner }),
-        'should be less than or equal to 1 ether'
+        'should be greater than 0 and less than 1 ether'
       );
+      await expectRevert(
+        poaMania.setPrizeSizes([0, 0], { from: owner }),
+        'should be greater than 0 and less than 1 ether'
+      );
+      await expectRevert(
+        poaMania.setPrizeSizes([ether('0.4'), ether('0.5')], { from: owner }),
+        'should satisfy: 1st prize >= 2nd prize >= 3rd prize'
+      );
+      await expectRevert(
+        poaMania.setPrizeSizes([ether('0.3'), ether('0.3')], { from: owner }),
+        'should satisfy: 1st prize >= 2nd prize >= 3rd prize'
+      );
+      await poaMania.setPrizeSizes([ether('0.4'), ether('0.3')], { from: owner });
     });
   });
   describe('setBlockTime', () => {
@@ -786,6 +872,14 @@ contract('PoaMania', accounts => {
         'Ownable: caller is not the owner'
       );
     });
+    it('fails if greater than max deposit', async () => {
+      await poaMania.setMaxDeposit(ether('100'));
+      await expectRevert(
+        poaMania.setMinDeposit(ether('101')),
+        'should be less than or equal to max deposit'
+      );
+      await poaMania.setMinDeposit(ether('100'));
+    });
   });
   describe('setMaxDeposit', () => {
     it('should set', async () => {
@@ -798,6 +892,14 @@ contract('PoaMania', accounts => {
         poaMania.setMaxDeposit(ether('1000'), { from: firstParticipant }),
         'Ownable: caller is not the owner'
       );
+    });
+    it('fails if less than min deposit', async () => {
+      await poaMania.setMinDeposit(ether('100'));
+      await expectRevert(
+        poaMania.setMaxDeposit(ether('99')),
+        'should be greater than or equal to min deposit'
+      );
+      await poaMania.setMaxDeposit(ether('100'));
     });
   });
 });
