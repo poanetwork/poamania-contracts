@@ -4,7 +4,7 @@
 
 [**www.poamania.com**](https://www.poamania.com/)
 
-**POA Mania** is a no-loss lottery where POA hodlers can win an extra slice of POA emission reward. Prizes are distributed to the winners every round.
+**POA Mania** is a no-loss and non-custodial lottery where POA hodlers can win an extra slice of POA emission reward. Prizes are distributed to the winners every round.
 
 1. Read [POA Mania Docs](https://www.poa.network/for-users/poa-mania) to understand the game rules.
 2. Read about [POA randomness](https://www.poa.network/for-developers/on-chain-random-numbers)
@@ -14,14 +14,17 @@ to see how cool it is.
 ### POA Core
 | Contract       | Address |
 | -------------- | ------- |
-| Proxy          | [0xf7ECea96dA4951e88E699cfb67d909Ec74Ba917E](https://blockscout.com/poa/core/address/0xf7ECea96dA4951e88E699cfb67d909Ec74Ba917E) |
-| Implementation | [0x0C31e682d401c465fdD05e40cE7149F8497B18E5](https://blockscout.com/poa/core/address/0x0C31e682d401c465fdD05e40cE7149F8497B18E5) |
+| Proxy          | [0xD9505dc188d0f6dC583143e5A97D8e8cF7c107e0](https://blockscout.com/poa/core/address/0xD9505dc188d0f6dC583143e5A97D8e8cF7c107e0) |
+| Implementation | [0x2300e0cd5d065d285236D7f55f6E2a19EB090C50](https://blockscout.com/poa/core/address/0x2300e0cd5d065d285236D7f55f6E2a19EB090C50) |
 
 ### Sokol Testnet
 | Contract       | Address |
 | -------------- | ------- |
 | Proxy          | [0x9fa644CCF16cE358AFf9A86Cc2046a6C601b8F71](https://blockscout.com/poa/sokol/address/0x9fa644CCF16cE358AFf9A86Cc2046a6C601b8F71) |
 | Implementation | [0x6f04Cf809fe42aa1a05d5B65B42540EF52aDBf5B](https://blockscout.com/poa/sokol/address/0x6f04Cf809fe42aa1a05d5B65B42540EF52aDBf5B) |
+
+## Security audit
+Poa Mania **was audited** by Quantstamp. You can find the audit report [here](https://www.poa.network/for-users/poa-mania/poa-mania-security-audit).
 
 ## How to run
 ### Setup
@@ -69,8 +72,8 @@ The owner can only change the game parameters.
 9. `setMinDeposit(uint256 _minDeposit)`
 10. `setMaxDeposit(uint256 _maxDeposit)`
 
-### Proxy Admin
-The Proxy Admin can upgrade the logic of the contracts. This role will be abolished after an audit and some testing time.
+### ~~Proxy Admin~~ (abolished, see [`renounceOwnership` transaction](https://blockscout.com/poa/core/tx/0x7c862374580a015fd55a467fc14e839ffe86f90594aacaf78e9d743bf09fd50e/internal_transactions))
+~~The Proxy Admin can upgrade the logic of the contracts. This role will be abolished after an audit and some testing time.~~
 
 *`Note: All methods are described in code.`*
 
