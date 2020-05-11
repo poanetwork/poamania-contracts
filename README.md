@@ -72,7 +72,7 @@ The owner can only change the game parameters.
 9. `setMinDeposit(uint256 _minDeposit)`
 10. `setMaxDeposit(uint256 _maxDeposit)`
 
-### ~~Proxy Admin~~ (abolished)
+### ~~Proxy Admin~~ (abolished, see [`renounceOwnership` transaction](https://blockscout.com/poa/core/tx/0x7c862374580a015fd55a467fc14e839ffe86f90594aacaf78e9d743bf09fd50e/internal_transactions))
 ~~The Proxy Admin can upgrade the logic of the contracts. This role will be abolished after an audit and some testing time.~~
 
 *`Note: All methods are described in code.`*
