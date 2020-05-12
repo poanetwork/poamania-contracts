@@ -23,7 +23,7 @@ contract PoaMania is Ownable {
      * @dev Emitted at the end of the round
      * @param roundId The round number
      * @param winners The array of the winners
-     * @param prizes The array of the prizes
+     * @param prizes The array of the prizes. If any of the winners is zero you should ignore the corresponding prize
      * @param fee The fee value (in tokens)
      * @param feeReceiver The fee receiver
      * @param jackpotShare The amount of tokens that goes to the Jackpot
