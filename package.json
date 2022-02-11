@@ -20,7 +20,7 @@
   "dependencies": {
     "@kleros/kleros": "poanetwork/kleros#4fcc5dff554a3372814b4b8b3784c9b4f4dc0dbe",
     "@openzeppelin/cli": "^2.7.1",
-    "@openzeppelin/contracts": "^2.5.0",
+    "@openzeppelin/contracts": "^4.4.2",
     "@openzeppelin/contracts-ethereum-package": "^2.4.0",
     "dotenv": "^8.2.0",
     "truffle-hdwallet-provider": "^1.0.17"
